@@ -31,8 +31,8 @@ get_chunk_size(State) ->
     State#?STATE.chunk_size.
 
 decode_messages(State, Bin) ->
-    {State, Bin, Acc} = decode_chunk(decode_chunk_basic_header(Bin), State, Bin, []),
-    {State, Bin, lists:reverse(Acc)}.
+    {State1, Bin1, Acc} = decode_chunk(decode_chunk_basic_header(Bin), State, Bin, []),
+    {lists:reverse(Acc), State1, Bin1}.
 
 decode_chunk(partial, State, Bin, Acc) ->
     {State, Bin, Acc};
@@ -40,7 +40,9 @@ decode_chunk(Header, State, Bin, Acc) ->
     {Fmt, ChunkId, _} = Header,
     LastChunk = case {get_last_chunk(State, ChunkId), Fmt} of
                     {undefined, ?CHUNK_FMT_0} -> #last_chunk{};
-                    {undefined, _}            -> error({first_chunk_format_id_must_be_0, ChunkId, Fmt});
+                    {undefined, _}            -> 
+                        %% TODO: ok | error に変更する
+                        error({first_chunk_format_id_must_be_0, ChunkId, Fmt});
                     {Chunk, _}                -> Chunk
                 end,
     decode_next_chunk(Header, State, Bin, ChunkId, LastChunk, Acc).
@@ -53,7 +55,7 @@ decode_next_chunk({Fmt,ChunkId,Bin1}, State, Bin, ChunkId, LastChunk, Acc) ->
         {LastChunk1, Bin2, undefined} -> decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, Acc);
         {LastChunk1, Bin2, Payload}   ->
             #last_chunk{timestamp=Timestamp, msg_type_id=TypeId, msg_stream_id=StreamId} = LastChunk1,
-            Msg = rtmpmsg_body_decode:decode(ChunkId, StreamId, TypeId, Timestamp, Payload),
+            Msg = rtmpmsg_message_decode:decode(ChunkId, StreamId, TypeId, Timestamp, Payload),
             %% TODO: set-chunk-size
             decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, [Msg|Acc])
     end;
@@ -68,7 +70,7 @@ save_last_chunk(State, ChunkId, LastChunk) ->
 
 decode_chunk_basic_header(<<Fmt:2, 0:6, ChunkId:08, Bin/binary>>) -> {Fmt, ChunkId+64, Bin};
 decode_chunk_basic_header(<<Fmt:2, 1:6, ChunkId:16, Bin/binary>>) -> {Fmt, ChunkId+64, Bin};
-decode_chunk_basic_header(<<Fmt:2,      ChunkId:06, Bin/binary>>) -> {Fmt, ChunkId, Bin};
+decode_chunk_basic_header(<<Fmt:2,      ChunkId:06, Bin/binary>>) when ChunkId > 1 -> {Fmt, ChunkId, Bin};
 decode_chunk_basic_header(<<_/binary>>)                           -> partial.
 
 decode_message(Bin, Fmt, LastChunk, ChunkSize) ->

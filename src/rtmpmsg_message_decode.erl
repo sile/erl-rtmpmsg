@@ -1,5 +1,6 @@
--module(rtmpmsg_body_decode).
+-module(rtmpmsg_message_decode).
 -export([decode/5]).
 
 decode(ChunkStreamId, MessageStreamId, MessageTypeId, Timestamp, Payload) ->
     {todo, ChunkStreamId, MessageStreamId, MessageTypeId, Timestamp, Payload}.
+
