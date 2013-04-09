@@ -1,0 +1,11 @@
+{application, rtmpmsg,
+ [
+  {description, "TODO"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.

@@ -1,0 +1,8 @@
+*~
+*.beam
+*.dump
+/deps/
+ebin
+/doc/*
+!/doc/overview.doc
+.eunit
