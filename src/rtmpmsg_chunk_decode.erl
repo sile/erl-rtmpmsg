@@ -1,7 +1,7 @@
 -module(rtmpmsg_chunk_decode).
 %% -compile(inline).
 
--export([init/0, get_chunk_size/1, fold/4]).
+-export([init/0, get_chunk_size/1, decode_messages/2]).
 
 -include("../include/internal/rtmpmsg_internal.hrl").
 
@@ -30,36 +30,35 @@ init() ->
 get_chunk_size(State) ->
     State#?STATE.chunk_size.
 
-fold(State, CallbackFn, InitialAcc, Bin) ->
-    decode_chunk(decode_chunk_basic_header(Bin), State, Bin, CallbackFn, InitialAcc).
+decode_messages(State, Bin) ->
+    {State, Bin, Acc} = decode_chunk(decode_chunk_basic_header(Bin), State, Bin, []),
+    {State, Bin, lists:reverse(Acc)}.
 
-decode_chunk(partial, State, Bin, _CallbackFn, Acc) ->
+decode_chunk(partial, State, Bin, Acc) ->
     {State, Bin, Acc};
-decode_chunk(Header, State, Bin, CallbackFn, Acc) ->
+decode_chunk(Header, State, Bin, Acc) ->
     {Fmt, ChunkId, _} = Header,
     LastChunk = case {get_last_chunk(State, ChunkId), Fmt} of
                     {undefined, ?CHUNK_FMT_0} -> #last_chunk{};
                     {undefined, _}            -> error({first_chunk_format_id_must_be_0, ChunkId, Fmt});
                     {Chunk, _}                -> Chunk
                 end,
-    decode_next_chunk(Header, State, Bin, ChunkId, LastChunk, CallbackFn, Acc).
+    decode_next_chunk(Header, State, Bin, ChunkId, LastChunk, Acc).
 
-decode_next_chunk(partial, State, Bin, ChunkId, LastChunk, _CallbackFn, Acc) ->
+decode_next_chunk(partial, State, Bin, ChunkId, LastChunk, Acc) ->
     {save_last_chunk(State, ChunkId, LastChunk), Bin, Acc};
-decode_next_chunk({Fmt,ChunkId,Bin1}, State, Bin, ChunkId, LastChunk, CallbackFn, Acc) ->
+decode_next_chunk({Fmt,ChunkId,Bin1}, State, Bin, ChunkId, LastChunk, Acc) ->
     case decode_message(Bin1, Fmt, LastChunk, State#?STATE.chunk_size) of
         partial                       -> {save_last_chunk(State,ChunkId,LastChunk), Bin, Acc};
-        {LastChunk1, Bin2, undefined} -> decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, CallbackFn, Acc);
+        {LastChunk1, Bin2, undefined} -> decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, Acc);
         {LastChunk1, Bin2, Payload}   ->
             #last_chunk{timestamp=Timestamp, msg_type_id=TypeId, msg_stream_id=StreamId} = LastChunk1,
             Msg = rtmpmsg_body_decode:decode(ChunkId, StreamId, TypeId, Timestamp, Payload),
-            case CallbackFn(State, Msg, Acc) of
-                {ok,   State1, Acc1} -> decode_next_chunk(decode_chunk_basic_header(Bin2), State1, Bin2, ChunkId, LastChunk1, CallbackFn, Acc1);
-                {stop, State1, Acc1} -> {save_last_chunk(State1,ChunkId,LastChunk1), Bin2, Acc1}
-            end
+            %% TODO: set-chunk-size
+            decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, [Msg|Acc])
     end;
-decode_next_chunk(Header, State, Bin, ChunkId, LastChunk, CallbackFn, Acc) ->
-    decode_chunk(Header, save_last_chunk(State,ChunkId,LastChunk), Bin, CallbackFn, Acc).
+decode_next_chunk(Header, State, Bin, ChunkId, LastChunk, Acc) ->
+    decode_chunk(Header, save_last_chunk(State,ChunkId,LastChunk), Bin, Acc).
 
 get_last_chunk(State, ChunkId) ->
     splay_tree:get_value(ChunkId, State#?STATE.last_chunks, undefined).
@@ -73,7 +72,6 @@ decode_chunk_basic_header(<<Fmt:2,      ChunkId:06, Bin/binary>>) -> {Fmt, Chunk
 decode_chunk_basic_header(<<_/binary>>)                           -> partial.
 
 decode_message(Bin, Fmt, LastChunk, ChunkSize) ->
-    
     case decode_message_header(Bin, Fmt, LastChunk) of
         partial            ->
             partial;
