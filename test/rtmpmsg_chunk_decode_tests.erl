@@ -18,8 +18,8 @@ decode_test_() ->
      fun () -> 
              meck:new(rtmpmsg_message_decode, [no_passthrough_cover]),
              meck:expect(rtmpmsg_message_decode, decode, 
-                         fun (ChunkStreamId, MsgStreamId, MsgTypeId, Timestamp, Payload) ->
-                                 {ChunkStreamId, MsgStreamId, MsgTypeId, Timestamp, Payload}
+                         fun (MsgStreamId, MsgTypeId, Timestamp, Payload) ->
+                                 {MsgStreamId, MsgTypeId, Timestamp, Payload}
                          end)
      end,
      fun (_) -> 
@@ -203,3 +203,5 @@ input_chunk_fmt_3(Msg) ->
     MessageHeader = <<>>,
     
     <<ChunkBasicHeader/binary, MessageHeader/binary, (encode_payload(ChunkId, Payload))/binary>>.
+
+tuple_push(Elem, Tuple) -> list_to_tuple([Elem|tuple_to_list(Tuple)]).

@@ -55,7 +55,7 @@ decode_next_chunk({Fmt,ChunkId,Bin1}, State, Bin, ChunkId, LastChunk, Acc) ->
         {LastChunk1, Bin2, undefined} -> decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, Acc);
         {LastChunk1, Bin2, Payload}   ->
             #last_chunk{timestamp=Timestamp, msg_type_id=TypeId, msg_stream_id=StreamId} = LastChunk1,
-            Msg = rtmpmsg_message_decode:decode(ChunkId, StreamId, TypeId, Timestamp, Payload),
+            Msg = rtmpmsg_message_decode:decode(StreamId, TypeId, Timestamp, Payload),
             %% TODO: set-chunk-size
             decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, [Msg|Acc])
     end;
