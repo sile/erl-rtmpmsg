@@ -1,8 +1,12 @@
 -module(rtmpmsg_message_decode).
--export([decode/4]).
+-export([decode_chunk/1]).
 
 -include("../include/rtmpmsg.hrl").
 -include("../include/internal/rtmpmsg_internal.hrl").
+
+decode_chunk(Chunk) ->
+    #chunk{msg_stream_id=StreamId, msg_type_id=TypeId, timestamp=Timestamp, payload=Payload} = Chunk,
+    decode(StreamId, TypeId, Timestamp, Payload).
 
 decode(MessageStreamId, MessageTypeId, Timestamp, Payload) ->
     #rtmpmsg
