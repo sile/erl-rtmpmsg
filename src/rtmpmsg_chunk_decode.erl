@@ -1,7 +1,7 @@
 -module(rtmpmsg_chunk_decode).
 %% -compile(inline).
 
--export([init/0, get_chunk_size/1, decode_messages/2]).
+-export([init/0, get_chunk_size/1, set_chunk_size/2, decode/2]).
 
 -include("../include/internal/rtmpmsg_internal.hrl").
 
@@ -30,37 +30,43 @@ init() ->
 get_chunk_size(State) ->
     State#?STATE.chunk_size.
 
-decode_messages(State, Bin) ->
-    {State1, Bin1, Acc} = decode_chunk(decode_chunk_basic_header(Bin), State, Bin, []),
-    {lists:reverse(Acc), State1, Bin1}.
+set_chunk_size(State, Size) ->
+    State#?STATE{chunk_size = Size}.
 
-decode_chunk(partial, State, Bin, Acc) ->
-    {State, Bin, Acc};
-decode_chunk(Header, State, Bin, Acc) ->
+decode(State, Bin) ->
+    {State1, Bin1, Chunk} = decode_chunk(decode_chunk_basic_header(Bin), State, Bin),
+    {Chunk, State1, Bin1}.
+
+decode_chunk(partial, State, Bin) ->
+    {State, Bin, partial};
+decode_chunk(Header, State, Bin) ->
     {Fmt, ChunkId, _} = Header,
     LastChunk = case {get_last_chunk(State, ChunkId), Fmt} of
                     {undefined, ?CHUNK_FMT_0} -> #last_chunk{};
-                    {undefined, _}            -> 
-                        %% TODO: ok | error に変更する
-                        error({first_chunk_format_id_must_be_0, ChunkId, Fmt});
+                    {undefined, _}            -> error({first_chunk_format_id_must_be_0, ChunkId, Fmt});
                     {Chunk, _}                -> Chunk
                 end,
-    decode_next_chunk(Header, State, Bin, ChunkId, LastChunk, Acc).
+    decode_next_chunk(Header, State, Bin, ChunkId, LastChunk).
 
-decode_next_chunk(partial, State, Bin, ChunkId, LastChunk, Acc) ->
-    {save_last_chunk(State, ChunkId, LastChunk), Bin, Acc};
-decode_next_chunk({Fmt,ChunkId,Bin1}, State, Bin, ChunkId, LastChunk, Acc) ->
+decode_next_chunk(partial, State, Bin, ChunkId, LastChunk) ->
+    {save_last_chunk(State, ChunkId, LastChunk), Bin, partial};
+decode_next_chunk({Fmt,ChunkId,Bin1}, State, Bin, ChunkId, LastChunk) ->
     case decode_message(Bin1, Fmt, LastChunk, State#?STATE.chunk_size) of
-        partial                       -> {save_last_chunk(State,ChunkId,LastChunk), Bin, Acc};
-        {LastChunk1, Bin2, undefined} -> decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, Acc);
+        partial                       -> {save_last_chunk(State,ChunkId,LastChunk), Bin, partial};
+        {LastChunk1, Bin2, undefined} -> decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1);
         {LastChunk1, Bin2, Payload}   ->
             #last_chunk{timestamp=Timestamp, msg_type_id=TypeId, msg_stream_id=StreamId} = LastChunk1,
-            Msg = rtmpmsg_message_decode:decode(StreamId, TypeId, Timestamp, Payload),
-            %% TODO: set-chunk-size
-            decode_next_chunk(decode_chunk_basic_header(Bin2), State, Bin2, ChunkId, LastChunk1, [Msg|Acc])
+            Chunk = #chunk{
+              id = ChunkId,
+              msg_stream_id = StreamId,
+              msg_type_id = TypeId,
+              timestamp = Timestamp,
+              payload = Payload
+             },
+            {save_last_chunk(State,ChunkId,LastChunk1), Bin2, Chunk}
     end;
-decode_next_chunk(Header, State, Bin, ChunkId, LastChunk, Acc) ->
-    decode_chunk(Header, save_last_chunk(State,ChunkId,LastChunk), Bin, Acc).
+decode_next_chunk(Header, State, Bin, ChunkId, LastChunk) ->
+    decode_chunk(Header, save_last_chunk(State,ChunkId,LastChunk), Bin).
 
 get_last_chunk(State, ChunkId) ->
     splay_tree:get_value(ChunkId, State#?STATE.last_chunks, undefined).

@@ -35,3 +35,11 @@
 -define(EVENT_BUFFER_EMPTY, 31).
 -define(EVENT_BUFFER_READY, 32).
 
+-record(chunk,
+        {
+          id = 0 :: non_neg_integer(),
+          msg_stream_id = 0 :: non_neg_integer(),
+          msg_type_id = 0 :: non_neg_integer(),
+          timestamp = 0 :: non_neg_integer(),
+          payload = <<"">> :: binary()
+        }).
