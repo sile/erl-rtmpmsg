@@ -66,10 +66,10 @@ decode_user_control(<<EventType:16, Payload/binary>>) ->
     #rtmpmsg_user_control{event=Event}.
 
 decode_audio(Payload) ->
-    #rtmpmsg_audio{data = Payload}. % TODO: flv
+    #rtmpmsg_audio{data = flv_tag:decode_audio(Payload)}.
 
 decode_video(Payload) ->
-    #rtmpmsg_video{data = Payload}. % TODO: flv
+    #rtmpmsg_video{data = flv_tag:decode_video(Payload)}.
 
 decode_command(AmfVersion, Payload) ->
     {ok, CommandName, Bin1}   = amf:decode(AmfVersion, Payload),
