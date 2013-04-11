@@ -67,7 +67,7 @@ encode_message_header(3, _LastChunk) ->
 encode_message_payload(<<Payload/binary>>, State, ChunkId, Acc) ->
     MaxChunkPayloadSize = State#?STATE.chunk_size,
     case Payload of
-        <<ChunkPayload:MaxChunkPayloadSize/binary, Rest/binary>> ->
+        <<ChunkPayload:MaxChunkPayloadSize/binary, Rest/binary>> when byte_size(Rest) > 0 ->
             encode_message_payload(Rest, State, ChunkId, [encode_chunk_basic_header(3, ChunkId), ChunkPayload | Acc]);
         _ ->
             {State, lists:reverse([Payload | Acc])}
@@ -80,6 +80,13 @@ get_last_chunk(State, Chunk) ->
     expand_last_chunk(Chunk, byte_size(Chunk#chunk.payload), splay_tree:get_value(Chunk#chunk.id, State#?STATE.last_chunks, undefined)).
 
 expand_last_chunk(Chunk, Len, undefined) ->
+    {#last_chunk{base_fmt      = 0,
+                 timestamp     = Chunk#chunk.timestamp,
+                 msg_type_id   = Chunk#chunk.msg_type_id,
+                 msg_stream_id = Chunk#chunk.msg_stream_id,
+                 msg_length    = Len},
+     0};
+expand_last_chunk(#chunk{timestamp=Now}=Chunk, Len, #last_chunk{timestamp=Prev}) when Now < Prev ->
     {#last_chunk{base_fmt      = 0,
                  timestamp     = Chunk#chunk.timestamp,
                  msg_type_id   = Chunk#chunk.msg_type_id,
