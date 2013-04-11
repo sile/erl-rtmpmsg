@@ -43,3 +43,5 @@
           timestamp = 0 :: non_neg_integer(),
           payload = <<"">> :: binary()
         }).
+
+-type chunk_format_id() :: ?CHUNK_FMT_0 | ?CHUNK_FMT_1 | ?CHUNK_FMT_2 | ?CHUNK_FMT_3.
