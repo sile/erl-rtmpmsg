@@ -134,5 +134,4 @@ decode_message_header(<<Bin/binary>>, ?CHUNK_FMT_2, Prev) ->
             partial
     end;
 decode_message_header(<<Bin/binary>>, ?CHUNK_FMT_3, Prev) ->
-    %% TODO: ここでのextended-timestampの扱いは要確認 (その他の境界条件も)
     {Prev, Bin}.

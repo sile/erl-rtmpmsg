@@ -4,12 +4,21 @@
 -include("../include/internal/rtmpmsg_internal.hrl").
 
 
-get_chunk_size_test_() ->
+chunk_size_test_() ->
     [
      {"チャンクサイズの初期値が適切か",
       fun () ->
               Dec = rtmpmsg_chunk_decode:init(),
               ?assertMatch(?CHUNK_SIZE_DEFAULT, rtmpmsg_chunk_decode:get_chunk_size(Dec))
+      end},
+     {"チャンクサイズの変更",
+      fun () ->
+              Dec0 = rtmpmsg_chunk_decode:init(),
+              
+              NewChunkSize = 12345,
+              Dec1 = rtmpmsg_chunk_decode:set_chunk_size(Dec0, NewChunkSize),
+              
+              ?assertMatch(NewChunkSize, rtmpmsg_chunk_decode:get_chunk_size(Dec1))
       end}
     ].
 
@@ -17,9 +26,10 @@ decode_test_() ->
     [
       {"チャンクフォーマットが 0 のデータをデコードできる",
        fun () ->
+               Dec = rtmpmsg_chunk_decode:init(),
+               
                InputChunk = input_data1(),
                Input = input_chunk_fmt_0(InputChunk),
-               Dec = rtmpmsg_chunk_decode:init(),
                
                Result = rtmpmsg_chunk_decode:decode(Dec, Input),
                ?assertMatch({#chunk{}, _, <<"">>}, Result),
