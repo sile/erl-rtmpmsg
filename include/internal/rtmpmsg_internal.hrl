@@ -1,3 +1,5 @@
+-define(PCM_MESSAGE_STREAM_ID, 0).
+-define(PCM_CHUNK_STREAM_ID, 2).
 
 -define(CHUNK_SIZE_DEFAULT, 128).
 -define(CHUNK_SIZE_MAX, 65536).
