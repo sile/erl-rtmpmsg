@@ -20,6 +20,7 @@
          event_ping_response/1,
          event_buffer_empty/1,
          event_buffer_ready/1,
+         event/2,
 
          audio/3,
          video/3,
@@ -107,6 +108,7 @@ event_ping_request(Timestamp) -> user_control_message(#rtmpmsg_event_ping_reques
 event_ping_response(Timestamp) -> user_control_message(#rtmpmsg_event_ping_response{timestamp=Timestamp}).
 event_buffer_empty(StreamId) -> user_control_message(#rtmpmsg_event_buffer_empty{stream_id=StreamId}).
 event_buffer_ready(StreamId) -> user_control_message(#rtmpmsg_event_buffer_ready{stream_id=StreamId}).
+event(EventTypeId, Payload) -> user_control_message(#rtmpmsg_event_unknown{type_id=EventTypeId, payload=Payload}).
 
 get_type_id(#rtmpmsg_set_chunk_size{})                -> ?TYPE_SET_CHUNK_SIZE;
 get_type_id(#rtmpmsg_abort{})                         -> ?TYPE_ABORT;
