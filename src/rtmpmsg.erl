@@ -30,6 +30,7 @@
          notify_command/4, notify_command/5,
 
          data/3,
+         shared_object/3,
          aggregate/2, aggregate/3
         ]).
 
@@ -93,6 +94,9 @@ notify_command(StreamId, AmfVersion, Name, Object, Args) ->
 data(StreamId, AmfVersion, Values) ->
     message(StreamId, 0, #rtmpmsg_data{amf_version=AmfVersion, values=Values}).
 
+shared_object(StreamId, AmfVersion, Payload) ->
+    message(StreamId, 0, #rtmpmsg_shared_obejct{amf_version=AmfVersion, payload=Payload}).
+    
 aggregate(StreamId, Messages) ->
     aggregate(StreamId, 0, Messages).
 

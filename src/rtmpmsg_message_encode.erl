@@ -43,10 +43,10 @@ encode_event(#rtmpmsg_event_buffer_ready{stream_id=Id})                  -> <<?E
 encode_event(#rtmpmsg_event_unknown{type_id=Type, payload=Payload})      -> <<Type:16, Payload/binary>>.
 
 encode_audio(Audio) ->
-    iolist_to_binary(flv_tag:encode_audio(Audio)). %% TODO: iolistで渡せるようにしたい
+    list_to_binary(flv_tag:encode_audio(Audio)). %% TODO: iolistで渡せるようにしたい
 
 encode_video(Video) ->
-    iolist_to_binary(flv_tag:encode_video(Video)). %% TODO: iolistで渡せるようにしたい
+    list_to_binary(flv_tag:encode_video(Video)). %% TODO: iolistで渡せるようにしたい
 
 encode_command(Cmd) ->
     #rtmpmsg_command{amf_version = AmfVer,
@@ -54,20 +54,20 @@ encode_command(Cmd) ->
                      transaction_id = TransactionId,
                      object = Object,
                      args = Args} = Cmd,
-    iolist_to_binary(
-      [amf:encode(AmfVer, Name),
-       amf:encode(AmfVer, TransactionId),
-       amf:encode(AmfVer, Object),
-       [amf:encode(AmfVer, Value) || Value <- Args]]).
+    list_to_binary(
+      [amf_encode(AmfVer, Name),
+       amf_encode(AmfVer, TransactionId),
+       amf_encode(AmfVer, Object),
+       [amf_encode(AmfVer, Value) || Value <- Args]]).
 
 encode_data(#rtmpmsg_data{amf_version=AmfVer, values=Values}) ->
-    iolist_to_binary([amf:encode(AmfVer, Value) || Value <- Values]).
+    list_to_binary([amf_encode(AmfVer, Value) || Value <- Values]).
 
 encode_aggregate(#rtmpmsg_aggregate{messages=Messages}) ->
     encode_aggregate_messages(Messages, []).
 
 encode_aggregate_messages([], Acc) ->
-    iolist_to_binary(lists:reverse(Acc));
+    list_to_binary(lists:reverse(Acc));
 encode_aggregate_messages([Msg|Messages], Acc) ->
     #rtmpmsg{type_id=Type, stream_id=StreamId, timestamp=Timestamp, body=Body} = Msg,
     Payload = encode_body(Body),
@@ -75,6 +75,10 @@ encode_aggregate_messages([Msg|Messages], Acc) ->
     BackPointer = 1 + 3 + 4 + 3 + Size,
 
     ReversedBin = [<<BackPointer:32>>, Payload, <<Type:8, Size:24, Timestamp:32, StreamId:24>>],
-    encode_aggregate_messages(Messages, [ReversedBin | Acc]).
+    encode_aggregate_messages(Messages, ReversedBin ++ Acc).
 
 encode_shared_object(#rtmpmsg_shared_obejct{payload=Payload}) -> Payload.
+
+amf_encode(AmfVersion, Value) ->
+    {ok, EncodedData} = amf:encode(AmfVersion, Value),
+    EncodedData.
