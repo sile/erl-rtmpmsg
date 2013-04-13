@@ -46,7 +46,7 @@
         }).
 
 %% TODO
--record(rtmpmsg_shared_obejct,
+-record(rtmpmsg_shared_object,
         {
           amf_version = amf0 :: amf:amf_version(),
           payload = <<"">> :: binary()

@@ -90,7 +90,7 @@ decode_data(AmfVersion, Payload) ->
                   values      = decode_amf_values(AmfVersion, Payload, [])}.
 
 decode_shared_object(AmfVersion, Payload) ->
-    #rtmpmsg_shared_obejct{amf_version = AmfVersion,
+    #rtmpmsg_shared_object{amf_version = AmfVersion,
                            payload = Payload}.
 
 decode_aggregate(Payload) ->

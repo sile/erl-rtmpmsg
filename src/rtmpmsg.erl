@@ -76,9 +76,34 @@
               
               message/0,
               message_body/0,
+              set_peer_bandwidth_limit_type/0,
+              
               message_body_protocol_control/0,
+              message_body_set_chunk_size/0,
+              message_body_abort/0,
+              message_body_ack/0,
+              message_body_set_peer_bandwidth/0,
+              message_body_user_control/0,
+
+              message_body_audio/0,
+              message_body_video/0,
+              message_body_command/0,
+              message_body_data/0,
+              message_body_shared_object/0,
+              message_body_aggregate/0,
+              message_body_unknown/0,
+              
               user_control_event/0,
-              set_peer_bandwidth_limit_type/0
+              event_stream_begin/0, 
+              event_stream_eof/0, 
+              event_stream_dry/0, 
+              event_set_buffer_length/0, 
+              event_stream_is_recorded/0, 
+              event_ping_request/0, 
+              event_ping_response/0, 
+              event_buffer_empty/0, 
+              event_buffer_ready/0, 
+              event_unknown/0
              ]).
 
 %%================================================================================
@@ -95,28 +120,52 @@
 
 -type message() :: #rtmpmsg{}.
 -type message_body() :: message_body_protocol_control() |
-                        #rtmpmsg_audio{} |
-                        #rtmpmsg_video{} |
-                        #rtmpmsg_command{} |
-                        #rtmpmsg_data{} |
-                        #rtmpmsg_shared_obejct{} |
-                        #rtmpmsg_aggregate{} |
-                        #rtmpmsg_unknown{}.
--type message_body_protocol_control() :: #rtmpmsg_set_chunk_size{} |
-                                         #rtmpmsg_abort{} |
-                                         #rtmpmsg_ack{} |
-                                         #rtmpmsg_set_peer_bandwidth{} |
-                                         #rtmpmsg_user_control{}.
--type user_control_event() :: #rtmpmsg_event_stream_begin{} |
-                              #rtmpmsg_event_stream_eof{} |
-                              #rtmpmsg_event_stream_dry{} |
-                              #rtmpmsg_event_set_buffer_length{} |
-                              #rtmpmsg_event_stream_is_recorded{} |
-                              #rtmpmsg_event_ping_request{} |
-                              #rtmpmsg_event_ping_response{} |
-                              #rtmpmsg_event_buffer_empty{} |
-                              #rtmpmsg_event_buffer_ready{} |
-                              #rtmpmsg_event_unknown{}.
+                        message_body_audio() |
+                        message_body_video() |
+                        message_body_command() |
+                        message_body_data() |
+                        message_body_shared_object() |
+                        message_body_aggregate() |
+                        message_body_unknown().
+-type message_body_protocol_control() :: message_body_set_chunk_size() |
+                                         message_body_abort() |
+                                         message_body_ack() |
+                                         message_body_set_peer_bandwidth() |
+                                         message_body_user_control().
+-type user_control_event() :: event_stream_begin() |
+                              event_stream_eof() |
+                              event_stream_dry() |
+                              event_set_buffer_length() |
+                              event_stream_is_recorded() |
+                              event_ping_request() |
+                              event_ping_response() |
+                              event_buffer_empty() |
+                              event_buffer_ready() |
+                              event_unknown().
+
+-type message_body_set_chunk_size()     :: #rtmpmsg_set_chunk_size{}.
+-type message_body_abort()              :: #rtmpmsg_abort{}.
+-type message_body_ack()                :: #rtmpmsg_ack{}.
+-type message_body_set_peer_bandwidth() :: #rtmpmsg_set_peer_bandwidth{}.
+-type message_body_user_control()       :: #rtmpmsg_user_control{}.
+-type message_body_audio()              :: #rtmpmsg_audio{}.
+-type message_body_video()              :: #rtmpmsg_video{}.
+-type message_body_command()            :: #rtmpmsg_command{}.
+-type message_body_data()               :: #rtmpmsg_data{}.
+-type message_body_shared_object()      :: #rtmpmsg_shared_object{}.
+-type message_body_aggregate()          :: #rtmpmsg_aggregate{}.
+-type message_body_unknown()            :: #rtmpmsg_unknown{}.
+
+-type event_stream_begin()       :: #rtmpmsg_event_stream_begin{}.
+-type event_stream_eof()         :: #rtmpmsg_event_stream_eof{}.
+-type event_stream_dry()         :: #rtmpmsg_event_stream_dry{}.
+-type event_set_buffer_length()  :: #rtmpmsg_event_set_buffer_length{}.
+-type event_stream_is_recorded() :: #rtmpmsg_event_stream_is_recorded{}.
+-type event_ping_request()       :: #rtmpmsg_event_ping_request{}.
+-type event_ping_response()      :: #rtmpmsg_event_ping_response{}.
+-type event_buffer_empty()       :: #rtmpmsg_event_buffer_empty{}.
+-type event_buffer_ready()       :: #rtmpmsg_event_buffer_ready{}.
+-type event_unknown()            :: #rtmpmsg_event_unknown{}.
 
 -type set_peer_bandwidth_limit_type() :: hard | soft | dynamic.
 
@@ -240,7 +289,7 @@ data(StreamId, AmfVersion, Values) -> message(StreamId, 0, #rtmpmsg_data{amf_ver
 
 %% @doc Make SharedObject Message (experimental)
 -spec shared_object(message_stream_id(), amf:amf_version(), binary()) -> message().
-shared_object(StreamId, AmfVersion, Payload) -> message(StreamId, 0, #rtmpmsg_shared_obejct{amf_version=AmfVersion, payload=Payload}).
+shared_object(StreamId, AmfVersion, Payload) -> message(StreamId, 0, #rtmpmsg_shared_object{amf_version=AmfVersion, payload=Payload}).
 
 %% @doc Make Aggregate Message
 -spec aggregate(message_stream_id(), [message()]) -> message().
@@ -262,7 +311,7 @@ get_type_id(#rtmpmsg_command{amf_version=amf0})       -> ?TYPE_COMMAND_AMF0;
 get_type_id(#rtmpmsg_command{amf_version=amf3})       -> ?TYPE_COMMAND_AMF3;
 get_type_id(#rtmpmsg_data{amf_version=amf0})          -> ?TYPE_DATA_AMF0;
 get_type_id(#rtmpmsg_data{amf_version=amf3})          -> ?TYPE_DATA_AMF3;
-get_type_id(#rtmpmsg_shared_obejct{amf_version=amf0}) -> ?TYPE_SHARED_OBJECT_AMF0;
-get_type_id(#rtmpmsg_shared_obejct{amf_version=amf3}) -> ?TYPE_SHARED_OBJECT_AMF3;
+get_type_id(#rtmpmsg_shared_object{amf_version=amf0}) -> ?TYPE_SHARED_OBJECT_AMF0;
+get_type_id(#rtmpmsg_shared_object{amf_version=amf3}) -> ?TYPE_SHARED_OBJECT_AMF3;
 get_type_id(#rtmpmsg_aggregate{})                     -> ?TYPE_AGGREGATE;
 get_type_id(#rtmpmsg_unknown{type_id=TypeId})         -> TypeId.

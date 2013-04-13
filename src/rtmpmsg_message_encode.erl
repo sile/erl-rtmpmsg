@@ -28,7 +28,7 @@ encode_body(#rtmpmsg_video{data=Video})    -> encode_video(Video);
 encode_body(#rtmpmsg_command{}=Body)       -> encode_command(Body);
 encode_body(#rtmpmsg_data{}=Body)          -> encode_data(Body);
 encode_body(#rtmpmsg_aggregate{}=Body)     -> encode_aggregate(Body);
-encode_body(#rtmpmsg_shared_obejct{}=Body) -> encode_shared_object(Body);
+encode_body(#rtmpmsg_shared_object{}=Body) -> encode_shared_object(Body);
 encode_body(#rtmpmsg_unknown{payload=Bin}) -> Bin.
 
 encode_event(#rtmpmsg_event_stream_begin{stream_id=Id})                  -> <<?EVENT_STREAM_BEGIN:16, Id:32>>;
@@ -77,7 +77,7 @@ encode_aggregate_messages([Msg|Messages], Acc) ->
     ReversedBin = [<<BackPointer:32>>, Payload, <<Type:8, Size:24, Timestamp:32, StreamId:24>>],
     encode_aggregate_messages(Messages, ReversedBin ++ Acc).
 
-encode_shared_object(#rtmpmsg_shared_obejct{payload=Payload}) -> Payload.
+encode_shared_object(#rtmpmsg_shared_object{payload=Payload}) -> Payload.
 
 amf_encode(AmfVersion, Value) ->
     {ok, EncodedData} = amf:encode(AmfVersion, Value),
