@@ -52,7 +52,7 @@
 %% Exported API
 %%================================================================================
 
-%% @doc Return new decoder
+%% @doc Return new decoder instance
 -spec new() -> decoder().
 new() -> #?STATE{}.
 
