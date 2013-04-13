@@ -122,8 +122,8 @@
 -type chunk_size()        :: 1..?CHUNK_SIZE_MAX.
 -type chunk_stream_id()   :: 2..65599.
 -type message_stream_id() :: non_neg_integer().
--type message_type_id()   :: non_neg_integer().
--type message_timestamp()    :: milliseconds().
+-type message_type_id()   :: byte().
+-type message_timestamp() :: milliseconds().
 
 -type message() :: #rtmpmsg{}.
 -type message_body() :: message_body_protocol_control() |

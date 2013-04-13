@@ -33,7 +33,7 @@
 %% Exported API
 -export([init/0, get_chunk_size/1, set_chunk_size/2, decode/2]).
 
-%% Exported Type
+%% Exported Types
 -export_type([state/0, decode_result/0]).
 
 %% Macro
