@@ -19,11 +19,11 @@ decode(State, Bin) ->
             {partial, State#?STATE{chunk_dec=Dec}, Bin1};
         {Chunk, Dec, Bin1} ->
             Msg = rtmpmsg_message_decode:decode_chunk(Chunk),
-            Dec1 = case Msg of
+            Dec1 = case Msg#rtmpmsg.body of
                        #rtmpmsg_set_chunk_size{size=Size} ->
                            rtmpmsg_chunk_decode:set_chunk_size(Dec, Size);
                        _ ->
                            Dec
                    end,
-            {ok, Msg, State#?STATE{chunk_dec=Dec1}, Bin1}
+            {ok, State#?STATE{chunk_dec=Dec1}, Msg, Bin1}
     end.
