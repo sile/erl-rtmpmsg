@@ -48,7 +48,7 @@
 
 -record(last_chunk,
         {
-          timestamp       = 0  :: rtmpmsg:rtmp_timestamp(),
+          timestamp       = 0  :: rtmpmsg:message_timestamp(),
           timestamp_delta = 0  :: rtmpmsg:milliseconds(),
           msg_type_id     = 0  :: rtmpmsg:message_type_id(),
           msg_stream_id   = 0  :: rtmpmsg:message_stream_id(),

@@ -72,7 +72,8 @@
               chunk_size/0,
               chunk_stream_id/0,
               message_stream_id/0,
-              rtmp_timestamp/0,
+              message_type_id/0,
+              message_timestamp/0,
               
               message/0,
               message_body/0,
@@ -82,6 +83,7 @@
               message_body_set_chunk_size/0,
               message_body_abort/0,
               message_body_ack/0,
+              message_body_win_ack_size/0,
               message_body_set_peer_bandwidth/0,
               message_body_user_control/0,
 
@@ -121,7 +123,7 @@
 -type chunk_stream_id()   :: 2..65599.
 -type message_stream_id() :: non_neg_integer().
 -type message_type_id()   :: non_neg_integer().
--type rtmp_timestamp()    :: milliseconds().
+-type message_timestamp()    :: milliseconds().
 
 -type message() :: #rtmpmsg{}.
 -type message_body() :: message_body_protocol_control() |
@@ -135,6 +137,7 @@
 -type message_body_protocol_control() :: message_body_set_chunk_size() |
                                          message_body_abort() |
                                          message_body_ack() |
+                                         message_body_win_ack_size() |
                                          message_body_set_peer_bandwidth() |
                                          message_body_user_control().
 -type user_control_event() :: event_stream_begin() |
@@ -151,6 +154,7 @@
 -type message_body_set_chunk_size()     :: #rtmpmsg_set_chunk_size{}.
 -type message_body_abort()              :: #rtmpmsg_abort{}.
 -type message_body_ack()                :: #rtmpmsg_ack{}.
+-type message_body_win_ack_size()       :: #rtmpmsg_win_ack_size{}.
 -type message_body_set_peer_bandwidth() :: #rtmpmsg_set_peer_bandwidth{}.
 -type message_body_user_control()       :: #rtmpmsg_user_control{}.
 -type message_body_audio()              :: #rtmpmsg_audio{}.
@@ -181,7 +185,7 @@
 %%================================================================================
 
 %% @doc Make RTMP message
--spec message(message_stream_id(), rtmp_timestamp(), message_body()) -> message().
+-spec message(message_stream_id(), message_timestamp(), message_body()) -> message().
 message(StreamId, Timestamp, Body) ->
     #rtmpmsg
     {
