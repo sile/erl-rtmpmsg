@@ -28,7 +28,7 @@ init() ->
 get_chunk_size(State) ->
     State#?STATE.chunk_size.
 
-set_chunk_size(State, Size) ->
+set_chunk_size(State, Size) when 1 =< Size andalso Size =< ?CHUNK_SIZE_MAX ->
     State#?STATE{chunk_size=Size}.
 
 encode(State, Chunk) ->

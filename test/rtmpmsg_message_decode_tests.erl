@@ -66,7 +66,8 @@ decode_test_() ->
       end},
      {"user_controlメッセージの未知のイベントのデコード",
       fun () ->
-              assert_message_decode(rtmpmsg:event(10, <<"xyzzy">>))
+              UnknownEvent = #rtmpmsg_event_unknown{type_id=10, payload = <<"xyzzy">>},
+              assert_message_decode(rtmpmsg:message(10, 0, #rtmpmsg_user_control{event = UnknownEvent}))
       end},
      {setup,
       fun () -> meck:new(flv_tag, []) end,
