@@ -106,6 +106,11 @@
               event_unknown/0
              ]).
 
+%% Internal Types
+-export_type([
+              chunk/0
+             ]).
+
 %%================================================================================
 %% Types
 %%================================================================================
@@ -168,6 +173,8 @@
 -type event_unknown()            :: #rtmpmsg_event_unknown{}.
 
 -type set_peer_bandwidth_limit_type() :: hard | soft | dynamic.
+
+-type chunk() :: #chunk{}.
 
 %%================================================================================
 %% RTMP Message Construct API
