@@ -1,0 +1,15 @@
+{application, rtmpmsg,
+ [
+  {description, "RTMP message encode/decode library"},
+  {vsn, "0.1.0"},
+  {modules, [rtmpmsg, 
+             rtmpmsg_decoder, rtmpmsg_encoder,
+             rtmpmsg_message_decode, rtmpmsg_message_encode,
+             rtmpmsg_chunk_decode, rtmpmsg_chunk_encode]},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.
