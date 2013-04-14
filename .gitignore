@@ -4,5 +4,5 @@
 /deps/
 ebin
 /doc/*
-!/doc/overview.doc
+!/doc/overview.edoc
 .eunit
