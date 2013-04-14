@@ -1,5 +1,5 @@
 %%% @doc RTMP message decoding module 
-%%% TODO: @private
+%%% @private
 %%% @end
 %%%
 %%%
