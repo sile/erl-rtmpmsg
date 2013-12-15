@@ -9,7 +9,10 @@
   {registered, []},
   {applications, [
                   kernel,
-                  stdlib
+                  stdlib,
+                  splay_tree,
+                  amf,
+                  flv
                  ]},
   {env, []}
  ]}.
