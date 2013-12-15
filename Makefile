@@ -21,8 +21,9 @@ edoc:
 start: compile
 	erl -pz ebin deps/*/ebin
 
-dialyzer-init:
-	dialyzer --build_plt --apps erts kernel stdlib -r ebin ebin deps/*/ebin
+.dialyzer.plt:
+	touch .dialyzer.plt
+	dialyzer --build_plt --plt .dialyzer.plt --apps erts kernel stdlib -r ebin deps/*/ebin
 
-dialyzer:
-	dialyzer --src -r src/
+dialyze: .dialyzer.plt
+	dialyzer --plt .dialyzer.plt -r ebin
