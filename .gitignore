@@ -6,3 +6,4 @@ ebin
 /doc/*
 !/doc/overview.edoc
 .eunit
+.dialyzer.plt
