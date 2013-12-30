@@ -27,6 +27,7 @@
 %%%---------------------------------------------------------------------------------------
 -module(rtmpmsg_decoder).
 -include("../include/rtmpmsg.hrl").
+-include("../include/internal/rtmpmsg_internal.hrl").
 
 %% Exported API
 -export([new/0, decode/2]).
@@ -64,12 +65,17 @@ decode(Decoder, Bin) ->
         {partial, ChunkDec0, Bin1} -> 
             {partial, Decoder#?STATE{chunk_dec=ChunkDec0}, Bin1};
         {Chunk, ChunkDec0, Bin1} ->
-            Msg = rtmpmsg_message_decode:decode_chunk(Chunk),
-            ChunkDec1 = case Msg#rtmpmsg.body of
-                            #rtmpmsg_set_chunk_size{size=Size} ->
-                                rtmpmsg_chunk_decode:set_chunk_size(ChunkDec0, Size);
-                            _ ->
-                                ChunkDec0
-                        end,
-            {ok, Decoder#?STATE{chunk_dec=ChunkDec1}, Msg, Bin1}
+            case Chunk of
+                #chunk{msg_type_id = ?TYPE_AUDIO, payload = <<"">>} ->
+                    {partial, Decoder#?STATE{chunk_dec=ChunkDec0}, Bin1};
+                _ ->
+                    Msg = rtmpmsg_message_decode:decode_chunk(Chunk),
+                    ChunkDec1 = case Msg#rtmpmsg.body of
+                                    #rtmpmsg_set_chunk_size{size=Size} ->
+                                        rtmpmsg_chunk_decode:set_chunk_size(ChunkDec0, Size);
+                                    _ ->
+                                        ChunkDec0
+                                end,
+                    {ok, Decoder#?STATE{chunk_dec=ChunkDec1}, Msg, Bin1}
+            end
     end.
