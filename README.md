@@ -3,7 +3,7 @@
 ErlRTMPMsg is an RTMP message(ver1.0) encoding/deconding library written in Erlang.
 
 ## Version
-0.1.2
+0.1.3
 
 ## Usage
 ### Build
