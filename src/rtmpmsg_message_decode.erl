@@ -117,7 +117,13 @@ decode_audio(Payload) -> #rtmpmsg_audio{data = flv_tag:decode_audio(Payload)}.
 decode_video(Payload) -> #rtmpmsg_video{data = flv_tag:decode_video(Payload)}.
 
 -spec decode_command(amf:amf_version(), binary()) -> rtmpmsg:message_body_command().
-decode_command(AmfVersion, Payload) ->
+decode_command(AmfVersion0, Payload0) ->
+    {AmfVersion, Payload} =
+        case {AmfVersion0, Payload0} of
+            {amf3, <<0, Rest/binary>>} -> {amf0, Rest};  % NOTE: 理由は分からないがFlashPlayerはこのような変則的なデータを送ってくる
+            _                          -> {AmfVersion0, Payload0}
+        end,
+    AmfVersion = amf0,
     {ok, CommandName, Bin1}   = amf:decode(AmfVersion, Payload),
     {ok, TransactionId, Bin2} = amf:decode(AmfVersion, Bin1),
     {ok, CommandObject, Bin3} = amf:decode(AmfVersion, Bin2),
