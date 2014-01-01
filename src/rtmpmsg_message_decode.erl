@@ -111,10 +111,10 @@ decode_user_control(<<EventType:16, Payload/binary>>) ->
     #rtmpmsg_user_control{event=Event}.
 
 -spec decode_audio(binary()) -> rtmpmsg:message_body_audio().
-decode_audio(Payload) -> #rtmpmsg_audio{data = flv_tag:decode_audio(Payload)}.
+decode_audio(Payload) -> #rtmpmsg_audio{data = Payload}.
 
 -spec decode_video(binary()) -> rtmpmsg:message_body_video().
-decode_video(Payload) -> #rtmpmsg_video{data = flv_tag:decode_video(Payload)}.
+decode_video(Payload) -> #rtmpmsg_video{data = Payload}.
 
 -spec decode_command(amf:amf_version(), binary()) -> rtmpmsg:message_body_command().
 decode_command(AmfVersion0, Payload0) ->
@@ -123,7 +123,6 @@ decode_command(AmfVersion0, Payload0) ->
             {amf3, <<0, Rest/binary>>} -> {amf0, Rest};  % NOTE: 理由は分からないがFlashPlayerはこのような変則的なデータを送ってくる
             _                          -> {AmfVersion0, Payload0}
         end,
-    AmfVersion = amf0,
     {ok, CommandName, Bin1}   = amf:decode(AmfVersion, Payload),
     {ok, TransactionId, Bin2} = amf:decode(AmfVersion, Bin1),
     {ok, CommandObject, Bin3} = amf:decode(AmfVersion, Bin2),

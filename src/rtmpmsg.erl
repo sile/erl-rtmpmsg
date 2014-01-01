@@ -260,12 +260,12 @@ event_buffer_empty(StreamId) -> user_control_message(#rtmpmsg_event_buffer_empty
 event_buffer_ready(StreamId) -> user_control_message(#rtmpmsg_event_buffer_ready{stream_id=StreamId}).
 
 %% @doc Make Audio Message
--spec audio(message_stream_id(), milliseconds(), flv:tag_audio()) -> message().
-audio(StreamId, Timestamp, AudioData) -> message(StreamId, Timestamp, #rtmpmsg_audio{data=AudioData}).
+-spec audio(message_stream_id(), milliseconds(), binary()) -> message().
+audio(StreamId, Timestamp, <<AudioData/binary>>) -> message(StreamId, Timestamp, #rtmpmsg_audio{data=AudioData}).
 
 %% @doc Make Video Message
--spec video(message_stream_id(), milliseconds(), flv:tag_video()) -> message().
-video(StreamId, Timestamp, VideoData) -> message(StreamId, Timestamp, #rtmpmsg_video{data=VideoData}).
+-spec video(message_stream_id(), milliseconds(), binary()) -> message().
+video(StreamId, Timestamp, <<VideoData/binary>>) -> message(StreamId, Timestamp, #rtmpmsg_video{data=VideoData}).
 
 %% @doc Make Command Message
 -spec command(message_stream_id(), amf:amf_version(), amf:amf_string(), amf:amf_number(), amf:amf_value(), [amf:amf_value()]) -> message().
