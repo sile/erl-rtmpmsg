@@ -68,12 +68,12 @@
 
 -record(rtmpmsg_audio,
         {
-          data :: flv:tag_audio()
+          data :: binary()
         }).
 
 -record(rtmpmsg_video,
         {
-          data :: flv:tag_video()
+          data :: binary()
         }).
 
 -record(rtmpmsg_aggregate,

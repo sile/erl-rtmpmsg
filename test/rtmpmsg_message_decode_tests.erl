@@ -69,29 +69,14 @@ decode_test_() ->
               UnknownEvent = #rtmpmsg_event_unknown{type_id=10, payload = <<"xyzzy">>},
               assert_message_decode(rtmpmsg:message(10, 0, #rtmpmsg_user_control{event = UnknownEvent}))
       end},
-     {setup,
-      fun () -> meck:new(flv_tag, []) end,
-      fun (_) -> meck:unload(flv_tag) end,
-      [
-       {"audioメッセージのデコード",
-        fun () ->
-                meck:expect(flv_tag, encode_audio, 1, "dummy_audio_encoded_data"),
-                meck:expect(flv_tag, decode_audio, 1, dummy_audio_data),
-                assert_message_decode(rtmpmsg:audio(10, 1234, dummy_audio_data)),
-                
-                ?assert(meck:called(flv_tag, encode_audio, [dummy_audio_data])),
-                ?assert(meck:called(flv_tag, decode_audio, [<<"dummy_audio_encoded_data">>]))
-        end},
-       {"videoメッセージのデコード",
-        fun () ->
-                meck:expect(flv_tag, encode_video, 1, "dummy_video_encoded_data"),
-                meck:expect(flv_tag, decode_video, 1, dummy_video_data),
-                assert_message_decode(rtmpmsg:video(10, 1234, dummy_video_data)),
-                
-                ?assert(meck:called(flv_tag, encode_video, [dummy_video_data])),
-                ?assert(meck:called(flv_tag, decode_video, [<<"dummy_video_encoded_data">>]))
-        end}
-      ]},
+     {"audioメッセージのデコード",
+      fun () ->
+              assert_message_decode(rtmpmsg:audio(10, 1234, <<"dummy_audio_data">>))
+      end},
+     {"videoメッセージのデコード",
+      fun () ->
+              assert_message_decode(rtmpmsg:video(10, 1234, <<"dummy_video_data">>))
+      end},
      {"command(AMF0)メッセージのデコード",
       fun () ->
               assert_message_decode(rtmpmsg:command(10, amf0, <<"connect">>, 0.0, 

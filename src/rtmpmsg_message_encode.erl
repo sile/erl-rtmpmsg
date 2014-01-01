@@ -60,8 +60,8 @@ encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=hard})    -> <<Siz
 encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=soft})    -> <<Size:32, 1>>;
 encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=dynamic}) -> <<Size:32, 2>>;
 encode_body(#rtmpmsg_user_control{event=Event}) -> encode_event(Event);
-encode_body(#rtmpmsg_audio{data=Audio})    -> encode_audio(Audio);
-encode_body(#rtmpmsg_video{data=Video})    -> encode_video(Video);
+encode_body(#rtmpmsg_audio{data=Audio})    -> Audio;
+encode_body(#rtmpmsg_video{data=Video})    -> Video;
 encode_body(#rtmpmsg_command{}=Body)       -> encode_command(Body);
 encode_body(#rtmpmsg_data{}=Body)          -> encode_data(Body);
 encode_body(#rtmpmsg_aggregate{}=Body)     -> encode_aggregate(Body);
@@ -79,12 +79,6 @@ encode_event(#rtmpmsg_event_ping_response{timestamp=Timestamp})          -> <<?E
 encode_event(#rtmpmsg_event_buffer_empty{stream_id=Id})                  -> <<?EVENT_BUFFER_EMPTY:16, Id:32>>;
 encode_event(#rtmpmsg_event_buffer_ready{stream_id=Id})                  -> <<?EVENT_BUFFER_READY:16, Id:32>>;
 encode_event(#rtmpmsg_event_unknown{type_id=Type, payload=Payload})      -> <<Type:16, Payload/binary>>.
-
--spec encode_audio(flv:tag_audio()) -> binary().
-encode_audio(Audio) -> list_to_binary(flv_tag:encode_audio(Audio)).
-
--spec encode_video(flv:tag_video()) -> binary().
-encode_video(Video) -> list_to_binary(flv_tag:encode_video(Video)).
 
 -spec encode_command(rtmpmsg:message_body_command()) -> binary().
 encode_command(Cmd) ->
