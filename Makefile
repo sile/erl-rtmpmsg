@@ -1,10 +1,12 @@
-all: compile xref eunit                                                   
+ERLC_OPTS="[warnings_as_errors, warn_export_all, warn_untyped_record]"
+
+all: compile xref eunit
 
 init:
-	@./rebar get-deps compile	
+	@ERL_COMPILER_OPTIONS=$(ERLC_OPTS) ./rebar get-deps compile	
 
 compile:
-	@./rebar compile skip_deps=true
+	@ERL_COMPILER_OPTIONS=$(ERLC_OPTS) ./rebar compile skip_deps=true
 
 xref:
 	@./rebar xref skip_deps=true
