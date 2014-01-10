@@ -31,7 +31,7 @@
 -include("../include/internal/rtmpmsg_internal.hrl").
 
 %% Exported API
--export([init/0, get_chunk_size/1, set_chunk_size/2, decode/2]).
+-export([init/0, get_chunk_size/1, set_chunk_size/2, decode/2, reset/2]).
 
 %% Exported Types
 -export_type([state/0, decode_result/0]).
@@ -89,6 +89,11 @@ set_chunk_size(State, Size) when 1 =< Size andalso Size =< ?CHUNK_SIZE_MAX ->
 -spec decode(state(), binary()) -> decode_result().
 decode(State, Bin) ->
     decode_chunk(decode_chunk_basic_header(Bin), State, Bin).
+
+%% @doc Reset partial buffer for `ChunkId'
+-spec reset(state(), rtmpmsg:chunk_stream_id()) -> state().
+reset(State, ChunkId) ->
+    State#?STATE{last_chunks = splay_tree:erase(ChunkId, State#?STATE.last_chunks)}.
 
 %%================================================================================
 %% Internal Functions

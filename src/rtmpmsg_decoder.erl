@@ -58,6 +58,8 @@
 new() -> #?STATE{}.
 
 %% @doc Decode RTMP Message
+%%
+%% If decoded message is #rtmpmsg_set_chunk_size{} or #rtmpmsg_abort{}, it will be automatically handled in this function.
 -spec decode(decoder(), binary()) -> {ok, decoder(), rtmpmsg:message(), UnconsumedBin} | {partial, decoder(), UnconsumedBin} when
       UnconsumedBin :: binary().
 decode(Decoder, Bin) ->
@@ -67,10 +69,9 @@ decode(Decoder, Bin) ->
         {Chunk, ChunkDec0, Bin1} ->
             Msg = rtmpmsg_message_decode:decode_chunk(Chunk),
             ChunkDec1 = case Msg#rtmpmsg.body of
-                            #rtmpmsg_set_chunk_size{size=Size} ->
-                                rtmpmsg_chunk_decode:set_chunk_size(ChunkDec0, Size);
-                            _ ->
-                                ChunkDec0
+                            #rtmpmsg_set_chunk_size{size=Size} -> rtmpmsg_chunk_decode:set_chunk_size(ChunkDec0, Size);
+                            #rtmpmsg_abort{chunk_stream_id=Id} -> rtmpmsg_chunk_decode:reset(ChunkDec0, Id);
+                            _                                  -> ChunkDec0
                         end,
             {ok, Decoder#?STATE{chunk_dec=ChunkDec1}, Msg, Bin1}
     end.

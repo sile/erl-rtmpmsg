@@ -225,6 +225,28 @@ decode_test_() ->
       end}
     ].
 
+reset_test_() ->
+    [
+     {"複数チャンクに分かれているメッセージのデコード中に、チャンクリセットが行われた場合",
+      fun () ->
+              Dec0 = rtmpmsg_chunk_decode:init(),
+
+              InputChunk = input_chunk(),
+              {_, InputBin} = encode_chunks([InputChunk]),
+              <<PartialInputBin:10/binary, _/binary>> = InputBin,
+
+              %% 途中までデコード
+              ?assertMatch({partial, _, _}, rtmpmsg_chunk_decode:decode(Dec0, PartialInputBin)),
+              {partial, Dec1, _} = rtmpmsg_chunk_decode:decode(Dec0, PartialInputBin),
+
+              %% チャンクリセット
+              Dec2 = rtmpmsg_chunk_decode:reset(Dec1, InputChunk#chunk.id),
+
+              %% 最初から再度デコード
+              ?assertMatch({#chunk{}, _, _}, rtmpmsg_chunk_decode:decode(Dec2, InputBin))
+      end}
+    ].
+
 input_chunk() ->
     #chunk{id            = 4,
            msg_stream_id = 2,
