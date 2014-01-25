@@ -40,12 +40,6 @@
 -define(STATE, ?MODULE).
 
 %% Records
--record(?STATE,
-        {
-          chunk_size  = ?CHUNK_SIZE_DEFAULT :: rtmpmsg:chunk_size(),
-          last_chunks = splay_tree:new()    :: splay_tree:tree()
-        }).
-
 -record(last_chunk,
         {
           base_fmt        = 0 :: format_id(),
@@ -54,6 +48,12 @@
           msg_type_id     = 0 :: rtmpmsg:message_type_id(),
           msg_stream_id   = 0 :: rtmpmsg:message_stream_id(),
           msg_length      = 0 :: non_neg_integer()
+        }).
+
+-record(?STATE,
+        {
+          chunk_size  = ?CHUNK_SIZE_DEFAULT :: rtmpmsg:chunk_size(),
+          last_chunks = splay_tree:new()    :: splay_tree:tree(rtmpmsg:chunk_stream_id(), #last_chunk{})
         }).
 
 %%================================================================================
