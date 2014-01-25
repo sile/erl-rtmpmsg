@@ -45,8 +45,8 @@ decode_test_() ->
               {_Enc, Data} = rtmpmsg_encoder:encode(Enc0, ChunkStreamId, Msg0),
               <<Bin1:10/binary, Bin2/binary>> = list_to_binary(Data),
               
-              {partial, Dec1, Bin1Rest} = rtmpmsg_decoder:decode(Dec0, Bin1),
-              {ok, _Dec, DecodedMsg, <<"">>} = rtmpmsg_decoder:decode(Dec1, <<Bin1Rest/binary, Bin2/binary>>),
+              {partial, Dec1} = rtmpmsg_decoder:decode(Dec0, Bin1),
+              {ok, _Dec, DecodedMsg, <<"">>} = rtmpmsg_decoder:decode(Dec1, Bin2),
       
               ?assertEqual(Msg0, DecodedMsg)
       end}

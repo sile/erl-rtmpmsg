@@ -26,11 +26,12 @@
 %%%
 %%%---------------------------------------------------------------------------------------
 -module(rtmpmsg_decoder).
+-compile(inline).
 -include("../include/rtmpmsg.hrl").
 -include("../include/internal/rtmpmsg_internal.hrl").
 
 %% Exported API
--export([new/0, decode/2]).
+-export([new/0, decode/2, decode_all/2]).
 
 %% Exported Types
 -export_type([decoder/0]).
@@ -41,13 +42,14 @@
 %% Record
 -record(?STATE,
         {
-          chunk_dec = rtmpmsg_chunk_decode:init() :: rtmpmsg_chunk_decode:state()
+          chunk_dec  = rtmpmsg_chunk_decode:init() :: rtmpmsg_chunk_decode:state(),
+          unconsumed = <<"">>                      :: binary()
         }).
 
 %%================================================================================
 %% Types
 %%================================================================================
--type decoder() :: #?STATE{}.
+-opaque decoder() :: #?STATE{}.
 
 %%================================================================================
 %% Exported API
@@ -60,18 +62,41 @@ new() -> #?STATE{}.
 %% @doc Decode RTMP Message
 %%
 %% If decoded message is #rtmpmsg_set_chunk_size{} or #rtmpmsg_abort{}, it will be automatically handled in this function.
--spec decode(decoder(), binary()) -> {ok, decoder(), rtmpmsg:message(), UnconsumedBin} | {partial, decoder(), UnconsumedBin} when
-      UnconsumedBin :: binary().
-decode(Decoder, Bin) ->
-    case rtmpmsg_chunk_decode:decode(Decoder#?STATE.chunk_dec, Bin) of
-        {partial, ChunkDec0, Bin1} -> 
-            {partial, Decoder#?STATE{chunk_dec=ChunkDec0}, Bin1};
-        {Chunk, ChunkDec0, Bin1} ->
+-spec decode(decoder(), binary()) -> {ok, decoder(), rtmpmsg:message(), RestBin::binary()} | {partial, decoder()}.
+decode(Decoder, <<Bin/binary>>) ->
+    #?STATE{chunk_dec = ChunkDec, unconsumed = UnconsumedBin} = Decoder,
+    case decode_impl(<<UnconsumedBin/binary, Bin/binary>>, ChunkDec) of
+        {partial, ChunkDec1, Bin1} -> {partial, #?STATE{chunk_dec = ChunkDec1, unconsumed = Bin1}};
+        {Msg, ChunkDec1, Bin1}     -> {ok, #?STATE{chunk_dec = ChunkDec1, unconsumed = <<"">>}, Msg, Bin1}
+    end.
+
+%% @doc Decode RTMP Messages
+-spec decode_all(decoder(), binary()) -> {decoder(), [rtmpmsg:message()]}.
+decode_all(Decoder, <<Bin/binary>>) ->
+    #?STATE{chunk_dec = ChunkDec, unconsumed = UnconsumedBin} = Decoder,
+    {Msgs, ChunkDec1, Bin1} = decode_all_impl(<<UnconsumedBin/binary, Bin/binary>>, ChunkDec, []),
+    {#?STATE{chunk_dec = ChunkDec1, unconsumed = Bin1}, Msgs}.
+                        
+%%================================================================================
+%% Internal Fuctions
+%%================================================================================
+-spec decode_impl(binary(), rtmpmsg_chunk_decode:state()) -> {rtmpmsg:message() | partial, rtmpmsg_chunk_decode:state(), binary()}.
+decode_impl(<<Bin/binary>>, ChunkDec) ->
+    case rtmpmsg_chunk_decode:decode(ChunkDec, Bin) of
+        {partial, ChunkDec1, Bin1} -> {partial, ChunkDec1, Bin1};
+        {Chunk, ChunkDec1, Bin1}   ->
             Msg = rtmpmsg_message_decode:decode_chunk(Chunk),
-            ChunkDec1 = case Msg#rtmpmsg.body of
-                            #rtmpmsg_set_chunk_size{size=Size} -> rtmpmsg_chunk_decode:set_chunk_size(ChunkDec0, Size);
-                            #rtmpmsg_abort{chunk_stream_id=Id} -> rtmpmsg_chunk_decode:reset(ChunkDec0, Id);
-                            _                                  -> ChunkDec0
+            ChunkDec2 = case Msg#rtmpmsg.body of
+                            #rtmpmsg_set_chunk_size{size=Size} -> rtmpmsg_chunk_decode:set_chunk_size(ChunkDec1, Size);
+                            #rtmpmsg_abort{chunk_stream_id=Id} -> rtmpmsg_chunk_decode:reset(ChunkDec1, Id);
+                            _                                  -> ChunkDec1
                         end,
-            {ok, Decoder#?STATE{chunk_dec=ChunkDec1}, Msg, Bin1}
+            {Msg, ChunkDec2, Bin1}
+    end.
+
+-spec decode_all_impl(binary(), rtmpmsg_chunk_decode:state(), [rtmpmsg:message()]) -> {[rtmpmsg:message()], rtmpmsg_chunk_decode:state(), binary()}.
+decode_all_impl(<<Bin/binary>>, ChunkDec, Acc) ->
+    case decode_impl(Bin, ChunkDec) of
+        {partial, ChunkDec1, Bin1} -> {lists:reverse(Acc), ChunkDec1, Bin1};
+        {Message, ChunkDec1, Bin1} -> decode_all_impl(Bin1, ChunkDec1, [Message | Acc])
     end.
