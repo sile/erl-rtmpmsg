@@ -45,28 +45,28 @@ encode_to_chunk(ChunkStreamId, Msg) ->
       timestamp     = Msg#rtmpmsg.timestamp,
       msg_type_id   = Msg#rtmpmsg.type_id,
       msg_stream_id = Msg#rtmpmsg.stream_id,
-      payload       = encode_body(Msg#rtmpmsg.body)
+      payload       = encode_body(Msg#rtmpmsg.body, Msg#rtmpmsg.timestamp)
     }.
 
 %%================================================================================
 %% Internal Functions
 %%================================================================================
--spec encode_body(rtmpmsg:message_body()) -> binary().
-encode_body(#rtmpmsg_set_chunk_size{size=Size}) -> <<Size:32>>;
-encode_body(#rtmpmsg_abort{chunk_stream_id=Id}) -> <<Id:32>>;
-encode_body(#rtmpmsg_ack{sequence_number=Num})  -> <<Num:32>>;
-encode_body(#rtmpmsg_win_ack_size{size=Size})   -> <<Size:32>>;
-encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=hard})    -> <<Size:32, 0>>;
-encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=soft})    -> <<Size:32, 1>>;
-encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=dynamic}) -> <<Size:32, 2>>;
-encode_body(#rtmpmsg_user_control{event=Event}) -> encode_event(Event);
-encode_body(#rtmpmsg_audio{data=Audio})    -> Audio;
-encode_body(#rtmpmsg_video{data=Video})    -> Video;
-encode_body(#rtmpmsg_command{}=Body)       -> encode_command(Body);
-encode_body(#rtmpmsg_data{}=Body)          -> encode_data(Body);
-encode_body(#rtmpmsg_aggregate{}=Body)     -> encode_aggregate(Body);
-encode_body(#rtmpmsg_shared_object{}=Body) -> encode_shared_object(Body);
-encode_body(#rtmpmsg_unknown{payload=Bin}) -> Bin.
+-spec encode_body(rtmpmsg:message_body(), rtmpmsg:message_timestamp()) -> binary().
+encode_body(#rtmpmsg_set_chunk_size{size=Size}, _) -> <<Size:32>>;
+encode_body(#rtmpmsg_abort{chunk_stream_id=Id}, _) -> <<Id:32>>;
+encode_body(#rtmpmsg_ack{sequence_number=Num}, _)  -> <<Num:32>>;
+encode_body(#rtmpmsg_win_ack_size{size=Size}, _)   -> <<Size:32>>;
+encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=hard}, _)    -> <<Size:32, 0>>;
+encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=soft}, _)    -> <<Size:32, 1>>;
+encode_body(#rtmpmsg_set_peer_bandwidth{size=Size, limit_type=dynamic}, _) -> <<Size:32, 2>>;
+encode_body(#rtmpmsg_user_control{event=Event}, _) -> encode_event(Event);
+encode_body(#rtmpmsg_audio{data=Audio}, _)         -> Audio;
+encode_body(#rtmpmsg_video{data=Video}, _)         -> Video;
+encode_body(#rtmpmsg_command{}=Body, _)            -> encode_command(Body);
+encode_body(#rtmpmsg_data{}=Body, _)               -> encode_data(Body);
+encode_body(#rtmpmsg_aggregate{}=Body, Timestamp)  -> encode_aggregate(Body, Timestamp);
+encode_body(#rtmpmsg_shared_object{}=Body, _)      -> encode_shared_object(Body);
+encode_body(#rtmpmsg_unknown{payload=Bin}, _)      -> Bin.
 
 -spec encode_event(rtmpmsg:user_control_event()) -> binary().
 encode_event(#rtmpmsg_event_stream_begin{stream_id=Id})                  -> <<?EVENT_STREAM_BEGIN:16, Id:32>>;
@@ -97,20 +97,22 @@ encode_command(Cmd) ->
 encode_data(#rtmpmsg_data{amf_version=AmfVer, values=Values}) ->
     list_to_binary([amf_encode(AmfVer, Value) || Value <- Values]).
 
--spec encode_aggregate(rtmpmsg:message_body_aggregate()) -> binary().
-encode_aggregate(#rtmpmsg_aggregate{messages=Messages}) -> encode_aggregate_messages(Messages, []).
+-spec encode_aggregate(rtmpmsg:message_body_aggregate(), rtmpmsg:message_timestamp()) -> binary().
+encode_aggregate(#rtmpmsg_aggregate{messages=Messages}, Timestamp) -> encode_aggregate_messages(Messages, Timestamp ,[]).
 
--spec encode_aggregate_messages([rtmpmsg:message()], iolist()) -> binary().
-encode_aggregate_messages([], Acc) ->
+-spec encode_aggregate_messages([rtmpmsg:message()], rtmpmsg:message_timestamp(), iolist()) -> binary().
+encode_aggregate_messages([], _TimestampOffset, Acc) ->
     list_to_binary(lists:reverse(Acc));
-encode_aggregate_messages([Msg|Messages], Acc) ->
+encode_aggregate_messages([Msg|Messages], TimestampOffset, Acc) ->
+    %% NOTE: 先頭サブメッセージのタイムスタンプ == aggregateメッセージのタイムスタンプ、という前提
     #rtmpmsg{type_id=Type, stream_id=StreamId, timestamp=Timestamp, body=Body} = Msg,
-    Payload = encode_body(Body),
+    Payload = encode_body(Body, Timestamp),
     Size = byte_size(Payload),
     BackPointer = 1 + 3 + 4 + 3 + Size,
 
-    MsgData = [<<Type:8, Size:24, Timestamp:32, StreamId:24>>, Payload, <<BackPointer:32>>],
-    encode_aggregate_messages(Messages, [MsgData | Acc]).
+    <<TimestampExtended:8, TimestampBase:24>> = <<(Timestamp - TimestampOffset):32/signed>>,
+    MsgData = [<<Type:8, Size:24, TimestampBase:24, TimestampExtended:8, StreamId:24>>, Payload, <<BackPointer:32>>],
+    encode_aggregate_messages(Messages, TimestampOffset, [MsgData | Acc]).
 
 -spec encode_shared_object(rtmpmsg:message_body_shared_object()) -> binary().
 encode_shared_object(#rtmpmsg_shared_object{payload=Payload}) -> Payload.

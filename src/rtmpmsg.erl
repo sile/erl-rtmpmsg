@@ -304,7 +304,7 @@ shared_object(StreamId, AmfVersion, Payload) -> message(StreamId, 0, #rtmpmsg_sh
 
 %% @doc Make Aggregate Message
 -spec aggregate(message_stream_id(), [message()]) -> message().
-aggregate(StreamId, Messages) -> message(StreamId, 0, #rtmpmsg_aggregate{messages = Messages}).
+aggregate(StreamId, [Head | _] = Messages) -> message(StreamId, Head#rtmpmsg.timestamp, #rtmpmsg_aggregate{messages = Messages}).
 
 %%================================================================================
 %% Internal Functions

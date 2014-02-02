@@ -52,11 +52,11 @@ decode(MessageStreamId, MessageTypeId, Timestamp, Payload) ->
       stream_id = MessageStreamId,
       type_id   = MessageTypeId,
       timestamp = Timestamp,
-      body      = decode_body(MessageTypeId, Payload)
+      body      = decode_body(MessageTypeId, Timestamp, Payload)
     }.
 
--spec decode_body(rtmpmsg:message_type_id(), binary()) -> rtmpmsg:message_body().
-decode_body(TypeId, Payload) ->
+-spec decode_body(rtmpmsg:message_type_id(), rtmpmsg:message_timestamp(), binary()) -> rtmpmsg:message_body().
+decode_body(TypeId, Timestamp, Payload) ->
     case TypeId of
         ?TYPE_SET_CHUNK_SIZE     -> decode_set_chunk_size(Payload);
         ?TYPE_ABORT              -> decode_abort(Payload);
@@ -72,7 +72,7 @@ decode_body(TypeId, Payload) ->
         ?TYPE_DATA_AMF3          -> decode_data(amf3, Payload);
         ?TYPE_SHARED_OBJECT_AMF0 -> decode_shared_object(amf0, Payload);
         ?TYPE_SHARED_OBJECT_AMF3 -> decode_shared_object(amf3, Payload);
-        ?TYPE_AGGREGATE          -> decode_aggregate(Payload);
+        ?TYPE_AGGREGATE          -> decode_aggregate(Payload, Timestamp);
         _                        -> #rtmpmsg_unknown{type_id=TypeId, payload=Payload}
     end.
 
@@ -146,16 +146,26 @@ decode_shared_object(AmfVersion, Payload) ->
     #rtmpmsg_shared_object{amf_version = AmfVersion,
                            payload     = Payload}.
 
--spec decode_aggregate(binary()) -> rtmpmsg:message_body_aggregate().
-decode_aggregate(Payload) ->
-    #rtmpmsg_aggregate{messages = decode_aggregate_messages(Payload, [])}.
+-spec decode_aggregate(binary(), rtmpmsg:message_timestamp()) -> rtmpmsg:message_body_aggregate().
+decode_aggregate(Payload, Timestamp) ->
+    #rtmpmsg_aggregate{messages = decode_aggregate_messages_first(Payload, Timestamp)}.
 
--spec decode_aggregate_messages(binary(), [rtmpmsg:message()]) -> [rtmpmsg:message()].
-decode_aggregate_messages(<<>>, Acc) ->
+-spec decode_aggregate_messages_first(binary(), rtmpmsg:message_timestamp()) -> [rtmpmsg:message()].
+decode_aggregate_messages_first(<<>>, _) ->
+    [];
+decode_aggregate_messages_first(<<Type:8, Size:24, TimestampBase:24, TimestampExtended:8, StreamId:24, Payload:Size/binary, _BackPointer:32, Bin/binary>>, TimestampOffset) ->
+    <<Timestamp:32/signed>> = <<TimestampExtended:8, TimestampBase:24>>,
+    TimestampOffset2 = TimestampOffset - Timestamp,
+    Msg = decode(StreamId, Type, TimestampOffset2 + Timestamp, Payload),
+    decode_aggregate_messages(Bin, TimestampOffset2, [Msg]).
+
+-spec decode_aggregate_messages(binary(), rtmpmsg:message_timestamp(), [rtmpmsg:message()]) -> [rtmpmsg:message()].
+decode_aggregate_messages(<<>>, _, Acc) ->
     lists:reverse(Acc);
-decode_aggregate_messages(<<Type:8, Size:24, Timestamp:32, StreamId:24, Payload:Size/binary, _BackPointer:32, Bin/binary>>, Acc) ->
-    Msg = decode(StreamId, Type, Timestamp, Payload),
-    decode_aggregate_messages(Bin, [Msg|Acc]).
+decode_aggregate_messages(<<Type:8, Size:24, TimestampBase:24, TimestampExtended:8, StreamId:24, Payload:Size/binary, _BackPointer:32, Bin/binary>>, TimestampOffset, Acc) ->
+    <<Timestamp:32/signed>> = <<TimestampExtended:8, TimestampBase:24>>,
+    Msg = decode(StreamId, Type, TimestampOffset + Timestamp, Payload),
+    decode_aggregate_messages(Bin, TimestampOffset, [Msg|Acc]).
 
 -spec decode_event_stream_begin(binary())  -> rtmpmsg:event_stream_begin().
 decode_event_stream_begin(<<StreamId:32>>) -> #rtmpmsg_event_stream_begin{stream_id=StreamId}.
