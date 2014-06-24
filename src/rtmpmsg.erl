@@ -59,7 +59,7 @@
          response_command/4, 
          notify_command/4, notify_command/5,
 
-         data/3,
+         data/3, data/4,
          shared_object/3,
          aggregate/2
         ]).
@@ -295,8 +295,14 @@ notify_command(RequestMessage, Name, Object, Args) ->
 notify_command(StreamId, AmfVersion, Name, Object, Args) -> command(StreamId, AmfVersion, Name, 0, Object, Args).
 
 %% @doc Make Data Message
+%%
+%% XXX: deprecated
 -spec data(message_stream_id(), amf:amf_version(), [amf:amf_value()]) -> message().
-data(StreamId, AmfVersion, Values) -> message(StreamId, 0, #rtmpmsg_data{amf_version=AmfVersion, values=Values}).
+data(StreamId, AmfVersion, Values) -> data(StreamId, 0, AmfVersion, Values).
+
+%% @doc Make Data Message
+-spec data(message_stream_id(), milliseconds(), amf:amf_version(), [amf:amf_value()]) -> message().
+data(StreamId, Timestamp, AmfVersion, Values) -> message(StreamId, Timestamp, #rtmpmsg_data{amf_version=AmfVersion, values=Values}).
 
 %% @doc Make SharedObject Message (experimental)
 -spec shared_object(message_stream_id(), amf:amf_version(), binary()) -> message().
