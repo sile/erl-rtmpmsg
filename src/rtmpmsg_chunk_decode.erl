@@ -179,9 +179,9 @@ decode_message_payload(Bin, LastChunk, MaxPayloadSize) ->
 decode_message_header(<<Bin/binary>>, 0, _Last) ->
     case Bin of
         <<16#FFFFFF:24, Len:24, Type:8, Stream:32/little, Time:32, Rest/binary>> ->
-            {#last_chunk{timestamp=Time, msg_type_id=Type, msg_stream_id=Stream, msg_length=Len}, Rest};
+            {#last_chunk{timestamp_delta=Time, msg_type_id=Type, msg_stream_id=Stream, msg_length=Len}, Rest};
         <<Time:24, Len:24, Type:8, Stream:32/little, Rest/binary>> ->
-            {#last_chunk{timestamp=Time, msg_type_id=Type, msg_stream_id=Stream, msg_length=Len}, Rest};
+            {#last_chunk{timestamp_delta=Time, msg_type_id=Type, msg_stream_id=Stream, msg_length=Len}, Rest};
         _ ->
             partial
     end;

@@ -42,7 +42,6 @@
 %% Records
 -record(last_chunk,
         {
-          base_fmt        = 0 :: format_id(),
           timestamp       = 0 :: rtmpmsg:message_timestamp(),
           timestamp_delta = 0 :: rtmpmsg:milliseconds(),
           msg_type_id     = 0 :: rtmpmsg:message_type_id(),
@@ -147,27 +146,21 @@ get_last_chunk(State, Chunk) ->
       MaybeLastChunk       :: last_chunk() | undefined.
 expand_last_chunk(Chunk, Len, undefined) ->
     {
-      #last_chunk{base_fmt      = 0,
-                  timestamp     = Chunk#chunk.timestamp,
-                  msg_type_id   = Chunk#chunk.msg_type_id,
-                  msg_stream_id = Chunk#chunk.msg_stream_id,
-                  msg_length    = Len},
+      #last_chunk{timestamp       = Chunk#chunk.timestamp,
+                  timestamp_delta = Chunk#chunk.timestamp,
+                  msg_type_id     = Chunk#chunk.msg_type_id,
+                  msg_stream_id   = Chunk#chunk.msg_stream_id,
+                  msg_length      = Len},
       0
     };
 expand_last_chunk(#chunk{timestamp=Now}=Chunk, Len, #last_chunk{timestamp=Prev}) when Now < Prev ->
     {
-      #last_chunk{base_fmt      = 0,
-                  timestamp     = Chunk#chunk.timestamp,
-                  msg_type_id   = Chunk#chunk.msg_type_id,
-                  msg_stream_id = Chunk#chunk.msg_stream_id,
-                  msg_length    = Len},
+      #last_chunk{timestamp       = Chunk#chunk.timestamp,
+                  timestamp_delta = Chunk#chunk.timestamp,
+                  msg_type_id     = Chunk#chunk.msg_type_id,
+                  msg_stream_id   = Chunk#chunk.msg_stream_id,
+                  msg_length      = Len},
       0
-    };
-expand_last_chunk(#chunk{msg_stream_id=Stream, msg_type_id=Type, timestamp=Time}, Len,
-                  #last_chunk{msg_stream_id=Stream, msg_type_id=Type, msg_length=Len, timestamp=Time, base_fmt=0}=LastChunk) ->
-    {
-      LastChunk, 
-      3
     };
 expand_last_chunk(#chunk{msg_stream_id=Stream, msg_type_id=Type, timestamp=Now}, Len,
                   #last_chunk{msg_stream_id=Stream, msg_type_id=Type, msg_length=Len, timestamp=Prev, timestamp_delta=Delta} = LastChunk) 
@@ -179,16 +172,14 @@ expand_last_chunk(#chunk{msg_stream_id=Stream, msg_type_id=Type, timestamp=Now},
 expand_last_chunk(#chunk{msg_stream_id=Stream, msg_type_id=Type, timestamp=Now}, Len,
                   #last_chunk{msg_stream_id=Stream, msg_type_id=Type, msg_length=Len, timestamp=Prev} = LastChunk) ->
     {
-      LastChunk#last_chunk{base_fmt        = 2,
-                           timestamp       = Now,
+      LastChunk#last_chunk{timestamp       = Now,
                            timestamp_delta = Now - Prev},
       2
     };
 expand_last_chunk(#chunk{msg_stream_id=Stream, timestamp=Now} = Chunk, Len,
                   #last_chunk{msg_stream_id=Stream, timestamp=Prev} = LastChunk) ->
     {
-      LastChunk#last_chunk{base_fmt        = 1,
-                           timestamp       = Now,
+      LastChunk#last_chunk{timestamp       = Now,
                            timestamp_delta = Now - Prev,
                            msg_type_id     = Chunk#chunk.msg_type_id,
                            msg_length      = Len},
@@ -196,10 +187,10 @@ expand_last_chunk(#chunk{msg_stream_id=Stream, timestamp=Now} = Chunk, Len,
     };
 expand_last_chunk(Chunk, Len, _LastChunk) ->
     {
-      #last_chunk{base_fmt      = 0,
-                  timestamp     = Chunk#chunk.timestamp,
-                  msg_type_id   = Chunk#chunk.msg_type_id,
-                  msg_stream_id = Chunk#chunk.msg_stream_id,
-                  msg_length    = Len},
+      #last_chunk{timestamp       = Chunk#chunk.timestamp,
+                  timestamp_delta = Chunk#chunk.timestamp,
+                  msg_type_id     = Chunk#chunk.msg_type_id,
+                  msg_stream_id   = Chunk#chunk.msg_stream_id,
+                  msg_length      = Len},
       0
     }.
