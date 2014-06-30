@@ -1,3 +1,4 @@
+%% coding: latin-1
 -module(rtmpmsg_chunk_decode_tests).
 
 -include_lib("eunit/include/eunit.hrl").
@@ -40,10 +41,17 @@ decode_test_() ->
               InputChunk1 = InputChunk0#chunk{timestamp = 6789},
               assert_decode_chunks([InputChunk0, InputChunk1])
       end},
-     {"連続したチャンクデータのデコードができる: fmt0 => fmt3",
+     {"全く同じ内容のチャンクが連続した場合: fmt0 => fmt2 => fmt3 => fmt3",
       fun () ->
               InputChunk = input_chunk(),
-              assert_decode_chunks([InputChunk, InputChunk])
+              assert_decode_chunks([InputChunk, InputChunk, InputChunk, InputChunk])
+      end},
+     {"後続のチャンクのタイムスタンプの増分が最初のタイムスタンプの値と等しい場合: fmt0 => fmt3 => fmt3",
+      fun () ->
+              InputChunk0 = input_chunk(),
+              InputChunk1 = InputChunk0#chunk{timestamp = InputChunk0#chunk.timestamp + InputChunk0#chunk.timestamp},
+              InputChunk2 = InputChunk1#chunk{timestamp = InputChunk1#chunk.timestamp + InputChunk0#chunk.timestamp},
+              assert_decode_chunks([InputChunk0, InputChunk1, InputChunk2])
       end},
      {"連続したチャンクデータのデコードができる: fmt0 => fmt1 => fmt2 => fmt3",
       fun () ->

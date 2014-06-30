@@ -1,3 +1,4 @@
+%% coding: latin-1
 -module(rtmpmsg_decoder_tests).
 
 -include_lib("eunit/include/eunit.hrl").
