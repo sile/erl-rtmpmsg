@@ -103,7 +103,7 @@ encode_test_() ->
       fun () ->
               Timestamp = 16#12345678, % 16#FFFFFF 以上の値
               InputChunk0 = (input_chunk())#chunk{timestamp = Timestamp},
-              InputChunk1 = InputChunk0,
+              InputChunk1 = InputChunk0#chunk{timestamp = Timestamp + Timestamp},
               Expected = <<?FMT_EXT_0(4, Timestamp, 3, 2, <<"abc">>),
                            ?FMT_EXT_3(4, Timestamp, <<"abc">>)>>,
               ?assertEqual(Expected, encode_chunks([InputChunk0, InputChunk1]))
@@ -112,29 +112,32 @@ encode_test_() ->
       fun () ->
               %% 0xFFFFFFちょうどのケース
               Timestamp0 = 16#FFFFFF,
-              InputChunk0 = (input_chunk())#chunk{timestamp = Timestamp0},
+              InputChunk0_0 = (input_chunk())#chunk{timestamp = Timestamp0},
+              InputChunk0_1 = InputChunk0_0#chunk{timestamp = Timestamp0 + Timestamp0},
               Expected0 = <<?FMT_EXT_0(4, Timestamp0, 3, 2, <<"abc">>),
                             ?FMT_EXT_3(4, Timestamp0, <<"abc">>)>>,
-              ?assertEqual(Expected0, encode_chunks([InputChunk0, InputChunk0])),
+              ?assertEqual(Expected0, encode_chunks([InputChunk0_0, InputChunk0_1])),
 
               %% 1小さい
               Timestamp1 = Timestamp0 - 1,
-              InputChunk1 = (input_chunk())#chunk{timestamp = Timestamp1},
+              InputChunk1_0 = (input_chunk())#chunk{timestamp = Timestamp1},
+              InputChunk1_1 = InputChunk1_0#chunk{timestamp = Timestamp1 + Timestamp1},
               Expected1 = <<?FMT_0(4, Timestamp1, 3, 2, <<"abc">>),
                             ?FMT_3(4, <<"abc">>)>>,
-              ?assertEqual(Expected1, encode_chunks([InputChunk1, InputChunk1])),
+              ?assertEqual(Expected1, encode_chunks([InputChunk1_0, InputChunk1_1])),
 
               %% 1大きい
               Timestamp2 = Timestamp0 + 1,
-              InputChunk2 = (input_chunk())#chunk{timestamp = Timestamp2},
+              InputChunk2_0 = (input_chunk())#chunk{timestamp = Timestamp2},
+              InputChunk2_1 = InputChunk2_0#chunk{timestamp = Timestamp2 + Timestamp2},
               Expected2 = <<?FMT_EXT_0(4, Timestamp2, 3, 2, <<"abc">>),
                             ?FMT_EXT_3(4, Timestamp2, <<"abc">>)>>,
-              ?assertEqual(Expected2, encode_chunks([InputChunk2, InputChunk2]))
+              ?assertEqual(Expected2, encode_chunks([InputChunk2_0, InputChunk2_1]))
       end},
      {"ExtendedTimestampの取り扱い: fmt0 => fmt1 => fmt3",
       fun () ->
               TimestampBase  = 300,
-              TimestampDelta = 16#123456, % 16#FFFFFF 以上の差
+              TimestampDelta = 16#12345678, % 16#FFFFFF 以上の差
               InputChunk0 = (input_chunk())#chunk{timestamp = TimestampBase},
               InputChunk1 = InputChunk0#chunk{msg_type_id = 9, timestamp = TimestampBase + TimestampDelta},
               InputChunk2 = InputChunk1#chunk{timestamp = TimestampBase + TimestampDelta + TimestampDelta},

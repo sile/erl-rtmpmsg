@@ -86,13 +86,7 @@ set_chunk_size(State, Size) when 1 =< Size andalso Size =< ?CHUNK_SIZE_MAX ->
       EncodedData :: iolist().
 encode(State, Chunk) ->
     {LastChunk, Fmt} = get_last_chunk(State, Chunk),
-
-    ChunkBasicHeaderBytes = encode_chunk_basic_header(Fmt, Chunk#chunk.id),
-    MessageHeaderBytes    = encode_message_header(Fmt, LastChunk),
-    encode_message_payload(Chunk#chunk.payload,
-                           save_last_chunk(State, Chunk#chunk.id, LastChunk),
-                           Chunk#chunk.id,
-                           [MessageHeaderBytes, ChunkBasicHeaderBytes]).
+    encode_message(Chunk#chunk.payload, save_last_chunk(State, Chunk#chunk.id, LastChunk), Fmt, Chunk#chunk.id, LastChunk, []).
 
 %%================================================================================
 %% Internal Functions
@@ -119,17 +113,24 @@ encode_message_header(2, #last_chunk{timestamp_delta=Delta}) ->
         Delta < 16#FFFFFF -> <<    Delta:24>>;
         true              -> <<16#FFFFFF:24, Delta:32>>
     end;
-encode_message_header(3, _LastChunk) -> 
-    [].
+encode_message_header(3, #last_chunk{timestamp_delta=Delta}) ->
+    case Delta < 16#FFFFFF of
+        true  -> [];
+        false -> <<Delta:32>>
+    end.
 
--spec encode_message_payload(binary(), state(), rtmpmsg:chunk_stream_id(), iolist()) -> {state(), iolist()}.
-encode_message_payload(<<Payload/binary>>, State, ChunkId, Acc) ->
+-spec encode_message(binary(), state(), format_id(), rtmpmsg:chunk_stream_id(), #last_chunk{}, iolist()) -> {state(), iolist()}.
+encode_message(<<Payload/binary>>, State, Fmt, ChunkId, LastChunk, Acc) ->
+    ChunkBasicHeaderBytes = encode_chunk_basic_header(Fmt, ChunkId),
+    MessageHeaderBytes    = encode_message_header(Fmt, LastChunk),
+    HeaderBytes           = [ChunkBasicHeaderBytes, MessageHeaderBytes],
+
     MaxChunkPayloadSize = State#?STATE.chunk_size,
     case Payload of
         <<ChunkPayload:MaxChunkPayloadSize/binary, Rest/binary>> when byte_size(Rest) > 0 ->
-            encode_message_payload(Rest, State, ChunkId, [encode_chunk_basic_header(3, ChunkId), ChunkPayload | Acc]);
+            encode_message(Rest, State, 3, ChunkId, LastChunk, [ChunkPayload, HeaderBytes | Acc]);
         _ ->
-            {State, lists:reverse([Payload | Acc])}
+            {State, lists:reverse([Payload, HeaderBytes | Acc])}
     end.
 
 -spec save_last_chunk(state(), rtmpmsg:chunk_stream_id(), last_chunk()) -> state().
