@@ -204,4 +204,8 @@ decode_message_header(<<Bin/binary>>, 2, Last) ->
             partial
     end;
 decode_message_header(<<Bin/binary>>, 3, Last) ->
-    {Last, Bin}.
+    #last_chunk{timestamp_delta = TimeDelta0} = Last,
+    case TimeDelta0 >= 16#FFFFFF andalso Bin of
+        <<TimeDelta1:32, Rest/binary>> -> {Last#last_chunk{timestamp_delta = TimeDelta1}, Rest};
+        _                              -> {Last, Bin}
+    end.
