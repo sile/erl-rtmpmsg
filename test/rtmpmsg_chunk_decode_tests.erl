@@ -230,6 +230,67 @@ decode_test_() ->
 
               Len = length(InputChunks),
               ?assertMatch({_, <<SentinelByte>>, Len}, Result)
+      end},
+     {"ExtendedTimestampの取り扱い: fmt0 => fmt3",
+      fun () ->
+              Timestamp = 16#12345678, % 16#FFFFFF 以上の値
+              InputChunk0 = (input_chunk())#chunk{timestamp = Timestamp},
+              InputChunk1 = InputChunk0#chunk{timestamp = Timestamp + Timestamp},
+              assert_decode_chunks([InputChunk0, InputChunk1])
+      end},
+     {"ExtendedTimestampの取り扱い(境界値): fmt0 => fmt3",
+      fun () ->
+              %% 0xFFFFFFちょうどのケース
+              Timestamp0 = 16#FFFFFF,
+              InputChunk0_0 = (input_chunk())#chunk{timestamp = Timestamp0},
+              InputChunk0_1 = InputChunk0_0#chunk{timestamp = Timestamp0 + Timestamp0},
+              assert_decode_chunks([InputChunk0_0, InputChunk0_1]),
+
+              %% 1小さい
+              Timestamp1 = Timestamp0 - 1,
+              InputChunk1_0 = (input_chunk())#chunk{timestamp = Timestamp1},
+              InputChunk1_1 = InputChunk1_0#chunk{timestamp = Timestamp1 + Timestamp1},
+              assert_decode_chunks([InputChunk1_0, InputChunk1_1]),
+
+              %% 1大きい
+              Timestamp2 = Timestamp0 + 1,
+              InputChunk2_0 = (input_chunk())#chunk{timestamp = Timestamp2},
+              InputChunk2_1 = InputChunk2_0#chunk{timestamp = Timestamp2 + Timestamp2},
+              assert_decode_chunks([InputChunk2_0, InputChunk2_1])
+      end},
+     {"ExtendedTimestampの取り扱い: fmt0 => fmt1 => fmt3",
+      fun () ->
+              TimestampBase  = 300,
+              TimestampDelta = 16#12345678, % 16#FFFFFF 以上の差
+              InputChunk0 = (input_chunk())#chunk{timestamp = TimestampBase},
+              InputChunk1 = InputChunk0#chunk{msg_type_id = 9, timestamp = TimestampBase + TimestampDelta},
+              InputChunk2 = InputChunk1#chunk{timestamp = TimestampBase + TimestampDelta + TimestampDelta},
+              assert_decode_chunks([InputChunk0, InputChunk1, InputChunk2])
+      end},
+     {"ExtendedTimestampの取り扱い(境界値): fmt0 => fmt1 => fmt3",
+      fun () ->
+              TimestampBase  = 300,
+
+              %% 16#FFFFFF ちょうどのケース
+              TimestampDelta0 = 16#FFFFFF,
+              InputChunk0_0 = (input_chunk())#chunk{timestamp = TimestampBase},
+              InputChunk0_1 = InputChunk0_0#chunk{msg_type_id = 9, timestamp = TimestampBase + TimestampDelta0},
+              InputChunk0_2 = InputChunk0_1#chunk{timestamp = TimestampBase + TimestampDelta0 + TimestampDelta0},
+              assert_decode_chunks([InputChunk0_0, InputChunk0_1, InputChunk0_2]),
+
+              %% 1小さい
+              TimestampDelta1 = TimestampDelta0 - 1,
+              InputChunk1_0 = (input_chunk())#chunk{timestamp = TimestampBase},
+              InputChunk1_1 = InputChunk1_0#chunk{msg_type_id = 9, timestamp = TimestampBase + TimestampDelta1},
+              InputChunk1_2 = InputChunk1_1#chunk{timestamp = TimestampBase + TimestampDelta1 + TimestampDelta1},
+              assert_decode_chunks([InputChunk1_0, InputChunk1_1, InputChunk1_2]),
+
+              %% 1大きい
+              TimestampDelta2 = TimestampDelta0 + 1,
+              InputChunk2_0 = (input_chunk())#chunk{timestamp = TimestampBase},
+              InputChunk2_1 = InputChunk2_0#chunk{msg_type_id = 9, timestamp = TimestampBase + TimestampDelta2},
+              InputChunk2_2 = InputChunk2_1#chunk{timestamp = TimestampBase + TimestampDelta2 + TimestampDelta2},
+              assert_decode_chunks([InputChunk2_0, InputChunk2_1, InputChunk2_2])
       end}
     ].
 
