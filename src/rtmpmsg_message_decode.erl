@@ -137,7 +137,12 @@ decode_command(AmfVersion0, Payload0) ->
     }.
 
 -spec decode_data(amf:amf_version(), binary()) -> rtmpmsg:message_body_data().
-decode_data(AmfVersion, Payload) ->
+decode_data(AmfVersion0, Payload0) ->
+    {AmfVersion, Payload} =
+        case {AmfVersion0, Payload0} of
+            {amf3, <<0, Rest/binary>>} -> {amf0, Rest};  % NOTE: 理由は分からないがFlashPlayerはこのような変則的なデータを送ってくる
+            _                          -> {AmfVersion0, Payload0}
+        end,
     #rtmpmsg_data{amf_version = AmfVersion,
                   values      = decode_amf_values(AmfVersion, Payload, [])}.
 
