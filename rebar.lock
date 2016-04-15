@@ -1,0 +1,12 @@
+[{<<"amf">>,
+  {git,"git://github.com/sile/erl-amf.git",
+       {ref,"9620507ba2825670ed4032ceaf79b7512a6877f8"}},
+  0},
+ {<<"meck">>,
+  {git,"git://github.com/eproxus/meck.git",
+       {ref,"86a099f6f48382db0891c9ae468013c1a0c7c20d"}},
+  1},
+ {<<"splay_tree">>,
+  {git,"git://github.com/sile/erl-splay-tree.git",
+       {ref,"f721962f6b668322f2c9e6f7cc82bba1d72758bc"}},
+  0}].
