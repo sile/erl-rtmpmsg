@@ -73,7 +73,7 @@ true.
 
 ## API
 
-See: EDoc document
+See: [EDoc documents](doc/)
 
 ## Reference
 * [RTMP Specification (ver1.0)](http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/rtmp/pdf/rtmp_specification_1.0.pdf)
