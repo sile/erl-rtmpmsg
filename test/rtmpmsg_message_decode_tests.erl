@@ -80,19 +80,19 @@ decode_test_() ->
       end},
      {"command(AMF0)メッセージのデコード",
       fun () ->
-              assert_message_decode(rtmpmsg:command(10, amf0, <<"connect">>, 0.0, 
+              assert_message_decode(rtmpmsg:command(10, amf0, <<"connect">>, 0.0,
                                                     amf:object([{<<"a">>, <<"b">>}]),
                                                     [<<"string">>, [1.0, 2.0, 3.0]]))
       end},
      {"command(AMF3)メッセージのデコード",
       fun () ->
-              assert_message_decode(rtmpmsg:command(10, amf3, <<"connect">>, 0.0, 
+              assert_message_decode(rtmpmsg:command(10, amf3, <<"connect">>, 0.0,
                                                     amf:object([{<<"a">>, <<"b">>}]),
                                                     [<<"string">>, [1.0, 2.0, 3.0]]))
       end},
      {"data(AMF0)メッセージのデコード",
       fun () ->
-              assert_message_decode(rtmpmsg:data(10, amf0, 
+              assert_message_decode(rtmpmsg:data(10, amf0,
                                                  [amf:object([{<<"a">>, <<"b">>},
                                                               {<<"c">>, 10.4}])]))
       end},
@@ -124,8 +124,30 @@ decode_test_() ->
       end}
     ].
 
+decode_invalid_data_test_() ->
+    [
+     {"commandの不正なデータのデコード",
+      fun () ->
+              Chunk = make_chunk_data(10, 1234, ?TYPE_COMMAND_AMF0, <<"">>),
+              Msg = rtmpmsg_message_decode:decode_chunk(Chunk),
+
+              ExpectMsg = #rtmpmsg_unknown{type_id = ?TYPE_COMMAND_AMF0, payload = <<"">>},
+              ?assertEqual(rtmpmsg:message(10, 1234, ExpectMsg), Msg)
+      end}
+    ].
+
 assert_message_decode(InputMsg) ->
     ChunkStreamId = 3,
     InputChunk = rtmpmsg_message_encode:encode_to_chunk(ChunkStreamId, InputMsg),
     Msg = rtmpmsg_message_decode:decode_chunk(InputChunk),
     ?assertEqual(InputMsg, Msg).
+
+make_chunk_data(StreamId, Timestamp, MsgTypeId, Payload) ->
+    ChunkStreamId = 3,
+    #chunk{
+       id            = ChunkStreamId,
+       timestamp     = Timestamp,
+       msg_type_id   = MsgTypeId,
+       msg_stream_id = StreamId,
+       payload       = Payload
+      }.
