@@ -1,4 +1,4 @@
-%%% @doc RTMP message decoding module 
+%%% @doc RTMP message decoding module
 %%% @private
 %%% @end
 %%%
@@ -57,23 +57,30 @@ decode(MessageStreamId, MessageTypeId, Timestamp, Payload) ->
 
 -spec decode_body(rtmpmsg:message_type_id(), rtmpmsg:message_timestamp(), binary()) -> rtmpmsg:message_body().
 decode_body(TypeId, Timestamp, Payload) ->
-    case TypeId of
-        ?TYPE_SET_CHUNK_SIZE     -> decode_set_chunk_size(Payload);
-        ?TYPE_ABORT              -> decode_abort(Payload);
-        ?TYPE_ACK                -> decode_ack(Payload);
-        ?TYPE_USER_CONTROL       -> decode_user_control(Payload);
-        ?TYPE_WIN_ACK_SIZE       -> decode_win_ack_size(Payload);
-        ?TYPE_SET_PEER_BANDWIDTH -> decode_set_peer_bandwidth(Payload);
-        ?TYPE_AUDIO              -> decode_audio(Payload);
-        ?TYPE_VIDEO              -> decode_video(Payload);
-        ?TYPE_COMMAND_AMF0       -> decode_command(amf0, Payload);
-        ?TYPE_COMMAND_AMF3       -> decode_command(amf3, Payload);
-        ?TYPE_DATA_AMF0          -> decode_data(amf0, Payload);
-        ?TYPE_DATA_AMF3          -> decode_data(amf3, Payload);
-        ?TYPE_SHARED_OBJECT_AMF0 -> decode_shared_object(amf0, Payload);
-        ?TYPE_SHARED_OBJECT_AMF3 -> decode_shared_object(amf3, Payload);
-        ?TYPE_AGGREGATE          -> decode_aggregate(Payload, Timestamp);
-        _                        -> #rtmpmsg_unknown{type_id=TypeId, payload=Payload}
+    Ret =
+        case TypeId of
+            ?TYPE_SET_CHUNK_SIZE     -> decode_set_chunk_size(Payload);
+            ?TYPE_ABORT              -> decode_abort(Payload);
+            ?TYPE_ACK                -> decode_ack(Payload);
+            ?TYPE_USER_CONTROL       -> decode_user_control(Payload);
+            ?TYPE_WIN_ACK_SIZE       -> decode_win_ack_size(Payload);
+            ?TYPE_SET_PEER_BANDWIDTH -> decode_set_peer_bandwidth(Payload);
+            ?TYPE_AUDIO              -> decode_audio(Payload);
+            ?TYPE_VIDEO              -> decode_video(Payload);
+            ?TYPE_COMMAND_AMF0       -> decode_command(amf0, Payload);
+            ?TYPE_COMMAND_AMF3       -> decode_command(amf3, Payload);
+            ?TYPE_DATA_AMF0          -> decode_data(amf0, Payload);
+            ?TYPE_DATA_AMF3          -> decode_data(amf3, Payload);
+            ?TYPE_SHARED_OBJECT_AMF0 -> decode_shared_object(amf0, Payload);
+            ?TYPE_SHARED_OBJECT_AMF3 -> decode_shared_object(amf3, Payload);
+            ?TYPE_AGGREGATE          -> decode_aggregate(Payload, Timestamp);
+            _                        -> #rtmpmsg_unknown{type_id=TypeId, payload=Payload}
+        end,
+    case Ret of
+        undefined ->
+            #rtmpmsg_unknown{type_id=TypeId, payload=Payload};
+        _ ->
+            Ret
     end.
 
 -spec decode_set_chunk_size(binary()) -> rtmpmsg:message_body_set_chunk_size().
@@ -116,25 +123,29 @@ decode_audio(Payload) -> #rtmpmsg_audio{data = Payload}.
 -spec decode_video(binary()) -> rtmpmsg:message_body_video().
 decode_video(Payload) -> #rtmpmsg_video{data = Payload}.
 
--spec decode_command(amf:amf_version(), binary()) -> rtmpmsg:message_body_command().
+-spec decode_command(amf:amf_version(), binary()) -> rtmpmsg:message_body_command() | undefined.
 decode_command(AmfVersion0, Payload0) ->
     {AmfVersion, Payload} =
         case {AmfVersion0, Payload0} of
             {amf3, <<0, Rest/binary>>} -> {amf0, Rest};  % NOTE: 理由は分からないがFlashPlayerはこのような変則的なデータを送ってくる
             _                          -> {AmfVersion0, Payload0}
         end,
-    {ok, CommandName, Bin1}   = amf:decode(AmfVersion, Payload),
-    {ok, TransactionId, Bin2} = amf:decode(AmfVersion, Bin1),
-    {ok, CommandObject, Bin3} = amf:decode(AmfVersion, Bin2),
-    OptionalArgs              = decode_amf_values(AmfVersion, Bin3, []),
-    #rtmpmsg_command
-    {
-      amf_version   =AmfVersion,
-      name          =CommandName,
-      transaction_id=TransactionId,
-      object        =CommandObject,
-      args          =OptionalArgs
-    }.
+    try
+        {ok, CommandName, Bin1}   = amf:decode(AmfVersion, Payload),
+        {ok, TransactionId, Bin2} = amf:decode(AmfVersion, Bin1),
+        {ok, CommandObject, Bin3} = amf:decode(AmfVersion, Bin2),
+        OptionalArgs              = decode_amf_values(AmfVersion, Bin3, []),
+        #rtmpmsg_command{
+           amf_version    = AmfVersion,
+           name           = CommandName,
+           transaction_id = TransactionId,
+           object         = CommandObject,
+           args           = OptionalArgs
+          }
+    catch
+        error:{badmatch, {error, _}} ->
+            undefined
+    end.
 
 -spec decode_data(amf:amf_version(), binary()) -> rtmpmsg:message_body_data().
 decode_data(AmfVersion0, Payload0) ->
