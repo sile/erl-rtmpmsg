@@ -27,7 +27,6 @@
 %%%---------------------------------------------------------------------------------------
 -module(rtmpmsg_bench).
 
--include("rtmpmsg.hrl").
 -include("internal/rtmpmsg_internal.hrl").
 
 %% Exported API
