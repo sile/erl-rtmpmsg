@@ -1,8 +1,8 @@
-[{<<"amf">>,
-  {git,"git://github.com/sile/erl-amf.git",
-       {ref,"d945258383d98c564244cbe13fff590de1d4e4fe"}},
-  0},
- {<<"splay_tree">>,
-  {git,"git://github.com/sile/erl-splay-tree.git",
-       {ref,"a70d2eccf98ff061a883674f97e4b865267bed1c"}},
-  0}].
+{"1.1.0",
+[{<<"amf">>,{pkg,<<"amf">>,<<"0.1.4">>},0},
+ {<<"splay_tree">>,{pkg,<<"splay_tree">>,<<"1.0.1">>},0}]}.
+[
+{pkg_hash,[
+ {<<"amf">>, <<"D4039E0A594B22AD33F1682CFB3E7D071BEE7EBB231DE431CD94E1001AB58383">>},
+ {<<"splay_tree">>, <<"B2B5F732E59A821658F1F0908D2B5FB3363787A98CD5F74AF4DC8B83D57FF4F6">>}]}
+].
