@@ -2,28 +2,14 @@
 
 ErlRTMPMsg is an RTMP message(ver1.0) encoding/deconding library written in Erlang.
 
-## Usage
-### Build
+## API
 
-ErlRTMPMsg uses [Rebar](https://github.com/basho/rebar/) as build tool.
+[EDoc Documentation](https://hexdocs.pm/rtmpmsg/)
 
-```sh
-# build
-$ git clone git://github.com/sile/erl-rtmpmsg.git
-$ cd erl-rtmpmsg
-$ rebar get-deps compile
-
-# run unit tests
-$ rebar eunit
-
-# generate document
-$ rebar edoc
-```
-
-### Examples
+## Examples
 
 ```erlang
-$ erl -pa ebin deps/*/ebin
+$ rebar3 shell
 
 %% Load Message Record
 1> rr(rtmpmsg).
@@ -71,9 +57,6 @@ $ erl -pa ebin deps/*/ebin
 true.
 ```
 
-## API
-
-See: [EDoc documents](doc/)
-
 ## Reference
+
 * [RTMP Specification (ver1.0)](http://wwwimages.adobe.com/www.adobe.com/content/dam/Adobe/en/devnet/rtmp/pdf/rtmp_specification_1.0.pdf)
