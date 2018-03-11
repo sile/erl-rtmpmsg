@@ -93,12 +93,12 @@ decode_test_() ->
       end},
      {"ペイロードが複数のチャンクにまたがる場合: チャンクサイズの倍数",
       fun () ->
-              InputChunk = (input_chunk())#chunk{payload = crypto:rand_bytes(?CHUNK_SIZE_DEFAULT * 3)},
+              InputChunk = (input_chunk())#chunk{payload = crypto:strong_rand_bytes(?CHUNK_SIZE_DEFAULT * 3)},
               assert_decode_chunks([InputChunk])
       end},
      {"ペイロードが複数のチャンクにまたがる場合",
       fun () ->
-              InputChunk = (input_chunk())#chunk{payload = crypto:rand_bytes(round(?CHUNK_SIZE_DEFAULT * 2.5))},
+              InputChunk = (input_chunk())#chunk{payload = crypto:strong_rand_bytes(round(?CHUNK_SIZE_DEFAULT * 2.5))},
               assert_decode_chunks([InputChunk])
       end},
      {"チャンクが細切れになっている場合",
@@ -113,7 +113,7 @@ decode_test_() ->
               {_, InputBin0} = encode_chunks(InputChunks),
 
               SentinelByte = 0,
-              Result = 
+              Result =
                   lists:foldl(fun (Byte, {AccDec, AccBin, Count}) ->
                                       case rtmpmsg_chunk_decode:decode(AccDec, AccBin) of
                                           {partial, AccDec1, AccBin1} ->
@@ -131,7 +131,7 @@ decode_test_() ->
       end},
      {"チャンクサイズが途中で変わる",
       fun () ->
-              InputChunk0 = (input_chunk())#chunk{payload = crypto:rand_bytes(?CHUNK_SIZE_DEFAULT * 3)},
+              InputChunk0 = (input_chunk())#chunk{payload = crypto:strong_rand_bytes(?CHUNK_SIZE_DEFAULT * 3)},
               InputChunk1 = InputChunk0#chunk{msg_type_id = 200},
               InputChunk2 = InputChunk1#chunk{timestamp = 6789},
               InputChunk3 = InputChunk2,
@@ -179,7 +179,7 @@ decode_test_() ->
       end},
      {"複数のチャンクストリームIDが混在している",
       fun () ->
-              InputChunk0 = (input_chunk())#chunk{payload = crypto:rand_bytes(?CHUNK_SIZE_DEFAULT * 3)},
+              InputChunk0 = (input_chunk())#chunk{payload = crypto:strong_rand_bytes(?CHUNK_SIZE_DEFAULT * 3)},
               InputChunk1 = (InputChunk0)#chunk{id = 10},
               InputChunk2 = (InputChunk0)#chunk{id = 100},
 
@@ -187,7 +187,7 @@ decode_test_() ->
               {_, InputBin1} = encode_chunks([InputChunk1]),
               {_, InputBin2} = encode_chunks([InputChunk2]),
 
-              InterleavedBin = 
+              InterleavedBin =
                   list_to_binary(
                     lists:zipwith3(fun (Bin0, Bin1, Bin2) -> [Bin0, Bin1, Bin2] end,
                                    split_chunk_bytes(InputBin0, 1, 11, ?CHUNK_SIZE_DEFAULT),
@@ -198,7 +198,7 @@ decode_test_() ->
       end},
      {"複数のチャンクストリームIDが混在していて かつ 細切れになっている",
       fun () ->
-              InputChunk0 = (input_chunk())#chunk{payload = crypto:rand_bytes(?CHUNK_SIZE_DEFAULT * 3)},
+              InputChunk0 = (input_chunk())#chunk{payload = crypto:strong_rand_bytes(?CHUNK_SIZE_DEFAULT * 3)},
               InputChunk1 = (InputChunk0)#chunk{id = 10},
               InputChunk2 = (InputChunk0)#chunk{id = 100},
               InputChunks = [InputChunk0, InputChunk1, InputChunk2],
@@ -207,7 +207,7 @@ decode_test_() ->
               {_, InputBin1} = encode_chunks([InputChunk1]),
               {_, InputBin2} = encode_chunks([InputChunk2]),
 
-              InterleavedBin = 
+              InterleavedBin =
                   list_to_binary(
                     lists:zipwith3(fun (Bin0, Bin1, Bin2) -> [Bin0, Bin1, Bin2] end,
                                    split_chunk_bytes(InputBin0, 1, 11, ?CHUNK_SIZE_DEFAULT),
@@ -215,7 +215,7 @@ decode_test_() ->
                                    split_chunk_bytes(InputBin2, 2, 11, ?CHUNK_SIZE_DEFAULT))),
 
               SentinelByte = 0,
-              Result = 
+              Result =
                   lists:foldl(fun (Byte, {AccDec, AccBin, Count}) ->
                                       case rtmpmsg_chunk_decode:decode(AccDec, AccBin) of
                                           {partial, AccDec1, AccBin1} ->
