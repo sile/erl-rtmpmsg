@@ -35,13 +35,13 @@
          message/3,
          protocol_control_message/1,
          user_control_message/1,
-         
+
          set_chunk_size/1,
          abort/1,
          ack/1,
          win_ack_size/1,
          set_peer_bandwidth/2,
-         
+
          event_stream_begin/1,
          event_stream_eof/1,
          event_stream_dry/1,
@@ -56,7 +56,7 @@
          video/3,
 
          command/6,
-         response_command/4, 
+         response_command/4,
          notify_command/4, notify_command/5,
 
          data/3, data/4,
@@ -68,17 +68,17 @@
 -export_type([
               byte_size/0,
               milliseconds/0,
-              
+
               chunk_size/0,
               chunk_stream_id/0,
               message_stream_id/0,
               message_type_id/0,
               message_timestamp/0,
-              
+
               message/0,
               message_body/0,
               set_peer_bandwidth_limit_type/0,
-              
+
               message_body_protocol_control/0,
               message_body_set_chunk_size/0,
               message_body_abort/0,
@@ -94,17 +94,17 @@
               message_body_shared_object/0,
               message_body_aggregate/0,
               message_body_unknown/0,
-              
+
               user_control_event/0,
-              event_stream_begin/0, 
-              event_stream_eof/0, 
-              event_stream_dry/0, 
-              event_set_buffer_length/0, 
-              event_stream_is_recorded/0, 
-              event_ping_request/0, 
-              event_ping_response/0, 
-              event_buffer_empty/0, 
-              event_buffer_ready/0, 
+              event_stream_begin/0,
+              event_stream_eof/0,
+              event_stream_dry/0,
+              event_set_buffer_length/0,
+              event_stream_is_recorded/0,
+              event_ping_request/0,
+              event_ping_response/0,
+              event_buffer_empty/0,
+              event_buffer_ready/0,
               event_unknown/0
              ]).
 
@@ -270,7 +270,7 @@ video(StreamId, Timestamp, <<VideoData/binary>>) -> message(StreamId, Timestamp,
 %% @doc Make Command Message
 -spec command(message_stream_id(), amf:amf_version(), amf:amf_string(), amf:amf_number(), amf:amf_value(), [amf:amf_value()]) -> message().
 command(StreamId, AmfVersion, Name, TransactionId, Object, Args) ->
-    message(StreamId, 0, #rtmpmsg_command{amf_version=AmfVersion, 
+    message(StreamId, 0, #rtmpmsg_command{amf_version=AmfVersion,
                                           name=Name,
                                           transaction_id=TransactionId,
                                           object=Object,

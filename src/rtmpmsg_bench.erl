@@ -27,6 +27,7 @@
 %%%---------------------------------------------------------------------------------------
 -module(rtmpmsg_bench).
 
+-include("rtmpmsg.hrl").
 -include("internal/rtmpmsg_internal.hrl").
 
 %% Exported API
@@ -116,6 +117,3 @@ message_encode_loop(Times, FullInput, [Message | Messages]) ->
     ChunkStreamId = 2, % dummy value
     _ = rtmpmsg_message_encode:encode_to_chunk(ChunkStreamId, Message),
     message_encode_loop(Times, FullInput, Messages).
-
-
-

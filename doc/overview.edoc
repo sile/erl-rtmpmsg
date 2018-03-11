@@ -1,7 +1,0 @@
-@author Takeru Ohta <phjgt308@gmail.com>
-@copyright Takeru Ohta
-@title RTMP message Encode/Decode library
-@doc
-This library provides APIs to encode/decode RTMP message.
-
-See README.md for more information.
