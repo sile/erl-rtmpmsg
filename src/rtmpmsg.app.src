@@ -1,8 +1,8 @@
 {application, rtmpmsg,
  [
   {description, "RTMP message encode/decode library"},
-  {vsn, git},
-  {modules, [rtmpmsg, 
+  {vsn, "0.2.14"},
+  {modules, [rtmpmsg,
              rtmpmsg_decoder, rtmpmsg_encoder,
              rtmpmsg_message_decode, rtmpmsg_message_encode,
              rtmpmsg_chunk_decode, rtmpmsg_chunk_encode]},
@@ -13,5 +13,8 @@
                   splay_tree,
                   amf
                  ]},
-  {env, []}
+  {env, []},
+  {maintainers,["Takeru Ohta"]},
+  {licenses,["MIT"]},
+  {links,[{"GitHub","https://github.com/sile/rtmpmsg"}]}
  ]}.
