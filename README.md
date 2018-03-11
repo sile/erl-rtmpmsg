@@ -1,5 +1,10 @@
 # ErlRTMPMsg
 
+[![hex.pm version](https://img.shields.io/hexpm/v/rtmpmsg.svg)](https://hex.pm/packages/rtmpmsg)
+[![Build Status](https://travis-ci.org/sile/rtmpmsg.svg?branch=master)](https://travis-ci.org/sile/rtmpmsg)
+[![Code Coverage](https://codecov.io/gh/sile/rtmpmsg/branch/master/graph/badge.svg)](https://codecov.io/gh/sile/rtmpmsg/branch/master)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ErlRTMPMsg is an RTMP message(ver1.0) encoding/deconding library written in Erlang.
 
 ## API
