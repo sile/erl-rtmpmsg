@@ -158,6 +158,7 @@ decode_message(Bin, Fmt, LastChunk, ChunkSize) ->
 decode_message_payload(Bin, LastChunk, MaxPayloadSize) ->
     #last_chunk{msg_length=MsgLen, acc_payload=AccPayload, acc_payload_len=AccLen} = LastChunk,
     ChunkPayloadSize = min(MsgLen - AccLen, MaxPayloadSize),
+    ChunkPayloadSize < 0 andalso error({msg_length_must_be_larger_than_acc_payload_len, MsgLen, AccLen}),
     case Bin of
         <<Payload:ChunkPayloadSize/binary, Bin1/binary>> ->
             AccPayload1 = [Payload|AccPayload],
