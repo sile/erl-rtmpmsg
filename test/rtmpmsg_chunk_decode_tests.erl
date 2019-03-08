@@ -316,6 +316,30 @@ reset_test_() ->
       end}
     ].
 
+invalid_chunk_test_() ->
+    [
+     {"不正なサイズ情報を持っているチャンクに対してエラーが発生する",
+      fun () ->
+              %% 初期化 チャンクサイズは 8
+              DecInit = rtmpmsg_chunk_decode:set_chunk_size(rtmpmsg_chunk_decode:init(), 8),
+              {_, InitInputBin} = encode_chunks([input_chunk()]),
+              {_, Dec0, _} = rtmpmsg_chunk_decode:decode(DecInit, InitInputBin),
+
+              %% msg_length = 0 の場合は許容する
+              %% Fmt: 1, ChunkId: 4, TimeDelta: 34, MsgLen: 0, MsgTypeId: 3, Rest: <<0, 0, 0, 0, 0, 0, 0, 0>>
+              MsgLength0ChunkBin = <<68, 0, 0, 34, 0, 0, 0, 3>>,
+              ?assertMatch({#chunk{}, _, _}, rtmpmsg_chunk_decode:decode(Dec0, MsgLength0ChunkBin)),
+
+              %% チャンクサイズが 8 なので 9 の長さを持ったメッセージは2つに分割されているが後者の MsgLen が不正
+              %% Fmt: 1, ChunkId: 4, TimeDelta: 34, MsgLen: 9, MsgTypeId: 3, Rest: <<0, 0, 0, 0, 0, 0, 0, 0>>
+              ChunkBin = <<68, 0, 0, 34, 0, 0, 9, 3, 0, 0, 0, 0, 0, 0, 0, 0>>,
+              %% Fmt: 1, ChunkId: 4, TimeDelta: 34, MsgLen: 1, MsgTypeId: 3, Rest: <<0>>
+              InvalidLengthChunkBin = <<68, 0, 0, 34, 0, 0, 1, 3, 0>>,
+
+              ?assertError(_, rtmpmsg_chunk_decode:decode(Dec0, <<ChunkBin/binary, InvalidLengthChunkBin/binary>>))
+      end}
+    ].
+
 input_chunk() ->
     #chunk{id            = 4,
            msg_stream_id = 2,

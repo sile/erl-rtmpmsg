@@ -1,6 +1,6 @@
 {application,rtmpmsg,
              [{description,"RTMP message encode/decode library"},
-              {vsn,"0.2.15"},
+              {vsn,"0.2.16"},
               {modules,[rtmpmsg,rtmpmsg_decoder,rtmpmsg_encoder,
                         rtmpmsg_message_decode,rtmpmsg_message_encode,
                         rtmpmsg_chunk_decode,rtmpmsg_chunk_encode]},
